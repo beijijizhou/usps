@@ -1,5 +1,6 @@
 import requests
 import time
+import webbrowser  # Added this to handle browser automation
 
 # --- CONFIGURATION ---
 URL = "https://factory.s2bdiy.com/req/factory/order/index"
@@ -14,10 +15,10 @@ HEADERS = {
 def process_by_page():
     current_page = 1
     total_found = 0
-    print("🚀 Starting Streaming Fetch (Page-by-Page)...")
+    print("🚀 Starting Streaming Fetch & Auto-Open...")
 
     while True:
-        # We fetch 35 per page to match the USPS single-click limit perfectly
+        # USPS limit is 35, so we keep limit at 35
         payload = {
             "page": current_page, 
             "limit": 35, 
@@ -39,7 +40,6 @@ def process_by_page():
                 print("\n🏁 Reached the end of the order list.")
                 break
 
-            # --- PROCESS CURRENT PAGE IMMEDIATELY ---
             page_tracks = []
             for order in orders:
                 track = order.get('order_logistics', {}).get('logisticss_track_number')
@@ -51,20 +51,22 @@ def process_by_page():
                 bulk_url = f"https://tools.usps.com/go/TrackAction?tLabels={','.join(page_tracks)}"
                 
                 print(f"\n📄 [ PAGE {current_page} - {len(page_tracks)} USPS Tracks ]")
-                print(f"🔗 Bulk Link: {bulk_url}")
+                print(f"🌍 Opening in browser: {bulk_url}")
+                
+                # THIS LINE OPENS THE TAB
+                webbrowser.open(bulk_url)
             else:
                 print(f"ℹ️  Page {current_page}: No USPS tracking numbers found.")
 
-            # Check if we are on the last page according to the API
             last_page = data_section.get('last_page', 1)
             if current_page >= last_page:
                 break
             
-            # Move to next page
             current_page += 1
             
-            # Short safety pause to prevent server-side rate limiting
-            time.sleep(0.5)
+            # INCREASE THIS SLEEP if you don't want 10 tabs opening in 2 seconds
+            # A 2 or 3 second delay gives you time to look at the tabs as they appear
+            time.sleep(2) 
 
         except Exception as e:
             print(f"⚠️  Critical Error: {e}")
