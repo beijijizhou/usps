@@ -4,8 +4,8 @@ import webbrowser  # Added this to handle browser automation
 
 # --- CONFIGURATION ---
 URL = "https://factory.s2bdiy.com/req/factory/order/index"
-# TOKEN = "808965|hSN8857AOAANqumfi7AWup0mMjtxyh4GR8n6GUTh"
-TOKEN = "813819|rHilycsLrEX33hMVNRnmmtp22OckM2Rf7KdXW8aX"
+TOKEN = "808965|hSN8857AOAANqumfi7AWup0mMjtxyh4GR8n6GUTh"
+# TOKEN = "813819|rHilycsLrEX33hMVNRnmmtp22OckM2Rf7KdXW8aX"
 HEADERS = {
     'Authorization': f'Bearer {TOKEN}',
     'Content-Type': 'application/json',
