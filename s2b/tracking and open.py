@@ -1,27 +1,29 @@
 import requests
 import time
-import webbrowser  # Added this to handle browser automation
+import webbrowser
 
 # --- CONFIGURATION ---
 URL = "https://factory.s2bdiy.com/req/factory/order/index"
-TOKEN = "808965|hSN8857AOAANqumfi7AWup0mMjtxyh4GR8n6GUTh"
-# TOKEN = "813819|rHilycsLrEX33hMVNRnmmtp22OckM2Rf7KdXW8aX"
+# TOKEN = "808965|hSN8857AOAANqumfi7AWup0mMjtxyh4GR8n6GUTh"
+TOKEN = "813819|rHilycsLrEX33hMVNRnmmtp22OckM2Rf7KdXW8aX"
 HEADERS = {
     'Authorization': f'Bearer {TOKEN}',
     'Content-Type': 'application/json',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
-def process_by_page():
+def process_in_batches_of_35():
     current_page = 1
-    total_found = 0
-    print("🚀 Starting Streaming Fetch & Auto-Open...")
+    total_processed = 0
+    buffer = []  # This will store numbers until we hit 35
+    
+    print("🚀 Gathering USPS tracks in batches of 35...")
 
     while True:
-        # USPS limit is 35, so we keep limit at 35
+        # We fetch 100 per page from the factory to find USPS numbers faster
         payload = {
             "page": current_page, 
-            "limit": 35, 
+            "limit": 100, 
             "status": 4
         }
         
@@ -37,42 +39,45 @@ def process_by_page():
             orders = data_section.get('data', [])
 
             if not orders:
-                print("\n🏁 Reached the end of the order list.")
+                # If we finish all pages but still have leftover numbers in the buffer
+                if buffer:
+                    open_usps(buffer)
+                print("\n🏁 Reached the end of all orders.")
                 break
 
-            page_tracks = []
+            # Filter for USPS numbers
             for order in orders:
                 track = order.get('order_logistics', {}).get('logisticss_track_number')
                 if track and str(track).startswith('9'):
-                    page_tracks.append(str(track))
-
-            if page_tracks:
-                total_found += len(page_tracks)
-                bulk_url = f"https://tools.usps.com/go/TrackAction?tLabels={','.join(page_tracks)}"
-                
-                print(f"\n📄 [ PAGE {current_page} - {len(page_tracks)} USPS Tracks ]")
-                print(f"🌍 Opening in browser: {bulk_url}")
-                
-                # THIS LINE OPENS THE TAB
-                webbrowser.open(bulk_url)
-            else:
-                print(f"ℹ️  Page {current_page}: No USPS tracking numbers found.")
+                    buffer.append(str(track))
+                    
+                    # AS SOON AS WE HIT 35, OPEN THE LINK
+                    if len(buffer) == 35:
+                        open_usps(buffer)
+                        total_processed += 35
+                        buffer = [] # Clear the buffer for the next batch
+                        time.sleep(2) # Delay to not overwhelm the browser
 
             last_page = data_section.get('last_page', 1)
             if current_page >= last_page:
+                if buffer: # Handle the final leftover batch
+                    open_usps(buffer)
+                    total_processed += len(buffer)
                 break
             
             current_page += 1
-            
-            # INCREASE THIS SLEEP if you don't want 10 tabs opening in 2 seconds
-            # A 2 or 3 second delay gives you time to look at the tabs as they appear
-            time.sleep(2) 
 
         except Exception as e:
             print(f"⚠️  Critical Error: {e}")
             break
 
-    print(f"\n✅ All done! Total USPS numbers processed: {total_found}")
+    print(f"\n✅ All done! Total USPS numbers opened: {total_processed}")
+
+def open_usps(track_list):
+    """Helper function to format the URL and open the browser"""
+    bulk_url = f"https://tools.usps.com/go/TrackAction?tLabels={','.join(track_list)}"
+    print(f"🌍 Opening Batch of {len(track_list)} tracks...")
+    webbrowser.open(bulk_url)
 
 if __name__ == "__main__":
-    process_by_page()
+    process_in_batches_of_35()
