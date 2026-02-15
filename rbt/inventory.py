@@ -22,6 +22,20 @@ payload = {
 response = requests.post(url, json=payload, headers=headers)
 
 if response.status_code == 200:
-    print("Success:", response.json())
+    json_data = response.json()
+    stock_items = json_data.get('data', {}).get('list', [])
+    
+    # Header
+    print("ProductName Color Size AvailableStock")
+    
+    for item in stock_items:
+        # We replace internal spaces with nothing or underscores to keep the row clean
+        name = item.get('productName', '').replace(" ", "")
+        color = item.get('color', '').replace(" ", "")
+        size = item.get('size', '').replace(" ", "")
+        stock = str(item.get('availableQty', 0))
+        
+        # Join with exactly one space
+        print(f"{name} {color} {size} {stock}")
 else:
     print(f"Error {response.status_code}: {response.text}")
