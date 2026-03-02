@@ -1,74 +1,86 @@
 import streamlit as st
 import time
+import pandas as pd
 from usps_utils import get_access_token, track_packages
-# --- LOGIC FUNCTIONS ---
 
-
-# --- UI SETUP ---
-st.set_page_config(page_title="USPS Tracker", page_icon="📦")
+st.set_page_config(layout="wide", page_title="USPS Tracker", page_icon="📦")
 st.title("📦 USPS Bulk Tracking Tool")
-
-# 1. User Input Area
 user_input = st.text_area(
-    "Paste tracking numbers here (one per line or comma-separated):",
-    placeholder="92...\n92001...",
-    height=300
+    "Paste tracking numbers here:",
+    placeholder="92...\n94...",
+    height=200
 )
 
-# 2. Process Button
 if st.button("Track Packages"):
     if not user_input.strip():
         st.warning("Please enter at least one tracking number.")
     else:
         try:
-            # Use Streamlit Secrets for your credentials
-            
             cid = st.secrets["USPS_CLIENT_ID"]
             csec = st.secrets["USPS_CLIENT_SECRET"]
             
-            with st.spinner("Acquiring token and fetching data..."):
+            with st.spinner("Logging into USPS..."):
                 token = get_access_token(cid, csec)
                 
-                # Clean user input: handle newlines and commas, remove duplicates
-                raw_list = user_input.replace(',', '\n').splitlines()
-                tracking_list = list(dict.fromkeys([line.strip() for line in raw_list if line.strip()]))
+            raw_list = user_input.replace(',', '\n').splitlines()
+            tracking_list = list(dict.fromkeys([line.strip() for line in raw_list if line.strip()]))
+            
+            total_items = len(tracking_list)
+            st.info(f"Processing {total_items} numbers...")
+
+            # Add a progress bar for the batches
+            progress_bar = st.progress(0)
+            
+            batch_size = 35
+            results_accumulator = []
+
+            for i in range(0, total_items, batch_size):
+                batch = tracking_list[i : i + batch_size]
+                batch_results = track_packages(token, batch)
                 
-                st.info(f"Found {len(tracking_list)} unique numbers. Querying in batches of 35...")
-
-                # 3. Batch process and Display
-                batch_size = 35
-                results_accumulator = []
-
-                for i in range(0, len(tracking_list), batch_size):
-                    batch = tracking_list[i : i + batch_size]
-                    batch_results = track_packages(token, batch)
+                for package in batch_results:
+                    num = package.get('trackingNumber')
+                    status = package.get('status', 'Unknown')
+                    events = package.get('trackingEvents', [])
                     
-                    for package in batch_results:
-                        num = package.get('trackingNumber')
-                        status = package.get('status', 'Unknown')
-                        events = package.get('trackingEvents', [])
-                        
-                        # Get latest event details
-                        city, state, zip_code = "N/A", "N/A", "N/A"
-                        if events:
-                            latest = events[0]
-                            city = latest.get('eventCity', 'N/A')
-                            state = latest.get('eventState', 'N/A')
-                            zip_code = latest.get('eventZIPCode', 'N/A')
-                        
-                        results_accumulator.append({
-                            "Tracking Number": num,
-                            "Status": status,
-                            "City": city,
-                            "State": state,
-                            "ZIP": zip_code
-                        })
+                    # Initialize default values
+                    city, state, zip_code, last_updated = "N/A", "N/A", "N/A", "N/A"
                     
-                    time.sleep(0.5) # Slight delay to be safe
+                    if events:
+                        latest = events[0]
+                        city = latest.get('eventCity', 'N/A')
+                        state = latest.get('eventState', 'N/A')
+                        zip_code = latest.get('eventZIPCode', 'N/A')
+                        # Extract and format the time
+                        raw_time = latest.get('eventTimestamp', 'N/A')
+                        print(events)
+                        if raw_time != "N/A":
+                            # Simplifies '2026-03-02T13:27:00Z' to '2026-03-02 13:27'
+                            last_updated = raw_time.replace('T', ' ').split('.')[0].replace('Z', '')
 
-                # 4. Show Results in a Table
-                st.success("Tracking Complete!")
-                st.dataframe(results_accumulator, use_container_width=True)
+                    results_accumulator.append({
+                        "Tracking Number": num,
+                        "Status": status,
+                        "Last Updated": last_updated, # Added this
+                        "City": city,
+                        "State": state,
+                        "ZIP": zip_code
+                    })
+                
+                # Update progress bar
+                progress = min((i + batch_size) / total_items, 1.0)
+                progress_bar.progress(progress)
+                time.sleep(0.5)
+
+            st.success("Tracking Complete!")
+            
+            # Display results in a clean table
+            df = pd.DataFrame(results_accumulator)
+            st.dataframe(df, use_container_width=True)
+
+            # Optional: Add download button
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Download as CSV", csv, "tracking_results.csv", "text/csv")
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
