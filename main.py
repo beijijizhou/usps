@@ -30,8 +30,8 @@ edited_df = st.data_editor(
 # 2. Process Button
 if st.button("Start Tracking", type="primary"):
     # Filter out any rows where the tracking number is empty
-    valid_data = edited_df[edited_df["Tracking Number"].str.strip() != ""]
-    
+    df_clean = edited_df.fillna("").astype(str)
+    valid_data = df_clean[df_clean["Tracking Number"].str.strip() != ""]    
     if valid_data.empty:
         st.warning("Please enter at least one Tracking Number in the table.")
     else:
