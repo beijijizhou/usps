@@ -1,86 +1,90 @@
 import streamlit as st
-import time
 import pandas as pd
+import time
 from usps_utils import get_access_token, track_packages
 
-st.set_page_config(layout="wide", page_title="USPS Tracker", page_icon="📦")
+st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
+
 st.title("📦 USPS Bulk Tracking Tool")
-user_input = st.text_area(
-    "Paste tracking numbers here:",
-    placeholder="92...\n94...",
-    height=200
+
+# 1. Create an empty starting sheet (2 columns)
+if 'df_input' not in st.session_state:
+    st.session_state.df_input = pd.DataFrame(
+        [{"Order ID": "", "Tracking Number": ""}], 
+    )
+
+st.subheader("Step 1: Paste your data below")
+st.caption("You can copy/paste directly from Excel or Google Sheets into this table.")
+
+# The Data Editor acts as your "Spreadsheet" input
+edited_df = st.data_editor(
+    st.session_state.df_input,
+    num_rows="dynamic", # Allows users to add/delete rows
+    use_container_width=True,
+    column_config={
+        "Order ID": st.column_config.TextColumn("Order ID", help="Your internal reference"),
+        "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="Paste USPS tracking here")
+    }
 )
 
-if st.button("Track Packages"):
-    if not user_input.strip():
-        st.warning("Please enter at least one tracking number.")
+# 2. Process Button
+if st.button("Start Tracking", type="primary"):
+    # Filter out any rows where the tracking number is empty
+    valid_data = edited_df[edited_df["Tracking Number"].str.strip() != ""]
+    
+    if valid_data.empty:
+        st.warning("Please enter at least one Tracking Number in the table.")
     else:
         try:
             cid = st.secrets["USPS_CLIENT_ID"]
             csec = st.secrets["USPS_CLIENT_SECRET"]
             
-            with st.spinner("Logging into USPS..."):
+            with st.spinner("Authorizing..."):
                 token = get_access_token(cid, csec)
-                
-            raw_list = user_input.replace(',', '\n').splitlines()
-            tracking_list = list(dict.fromkeys([line.strip() for line in raw_list if line.strip()]))
             
-            total_items = len(tracking_list)
-            st.info(f"Processing {total_items} numbers...")
-
-            # Add a progress bar for the batches
+            tracking_list = valid_data["Tracking Number"].tolist()
+            order_map = dict(zip(valid_data["Tracking Number"], valid_data["Order ID"]))
+            
+            results_accumulator = []
             progress_bar = st.progress(0)
             
             batch_size = 35
-            results_accumulator = []
-
-            for i in range(0, total_items, batch_size):
+            for i in range(0, len(tracking_list), batch_size):
                 batch = tracking_list[i : i + batch_size]
                 batch_results = track_packages(token, batch)
                 
                 for package in batch_results:
                     num = package.get('trackingNumber')
-                    status = package.get('status', 'Unknown')
                     events = package.get('trackingEvents', [])
                     
-                    # Initialize default values
-                    city, state, zip_code, last_updated = "N/A", "N/A", "N/A", "N/A"
-                    
+                    # Formatting the data
+                    city, state, zip_c, last_time = "N/A", "N/A", "N/A", "N/A"
                     if events:
                         latest = events[0]
                         city = latest.get('eventCity', 'N/A')
                         state = latest.get('eventState', 'N/A')
-                        zip_code = latest.get('eventZIPCode', 'N/A')
-                        # Extract and format the time
-                        raw_time = latest.get('eventTimestamp', 'N/A')
-                        print(events)
+                        zip_c = latest.get('eventZIPCode', 'N/A')
+                        raw_time = latest.get('eventDateTime', 'N/A')
                         if raw_time != "N/A":
-                            # Simplifies '2026-03-02T13:27:00Z' to '2026-03-02 13:27'
-                            last_updated = raw_time.replace('T', ' ').split('.')[0].replace('Z', '')
+                            last_time = raw_time.replace('T', ' ').split('.')[0].replace('Z', '')
 
                     results_accumulator.append({
+                        "Order ID": order_map.get(num, "N/A"),
                         "Tracking Number": num,
-                        "Status": status,
-                        "Last Updated": last_updated, # Added this
-                        "City": city,
-                        "State": state,
-                        "ZIP": zip_code
+                        "Status": package.get('status', 'Unknown'),
+                        "Last Updated": last_time,
+                        "Location": f"{city}, {state} {zip_c}"
                     })
                 
-                # Update progress bar
-                progress = min((i + batch_size) / total_items, 1.0)
-                progress_bar.progress(progress)
+                progress_bar.progress((i + len(batch)) / len(tracking_list))
                 time.sleep(0.5)
 
-            st.success("Tracking Complete!")
+            st.success("Success!")
+            final_df = pd.DataFrame(results_accumulator)
+            st.dataframe(final_df, use_container_width=True)
             
-            # Display results in a clean table
-            df = pd.DataFrame(results_accumulator)
-            st.dataframe(df, use_container_width=True)
-
-            # Optional: Add download button
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Download as CSV", csv, "tracking_results.csv", "text/csv")
+            csv = final_df.to_csv(index=False).encode('utf-8')
+            st.download_button("📥 Download Results", csv, "usps_report.csv", "text/csv")
 
         except Exception as e:
-            st.error(f"An error occurred: {e}")
+            st.error(f"Error: {e}")
