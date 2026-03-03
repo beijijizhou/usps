@@ -20,7 +20,7 @@ st.caption("You can copy/paste directly from Excel or Google Sheets into this ta
 edited_df = st.data_editor(
     st.session_state.df_input,
     num_rows="dynamic", # Allows users to add/delete rows
-    use_container_width=True,
+    width='stretch',
     column_config={
         "Order ID": st.column_config.TextColumn("Order ID", help="Your internal reference"),
         "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="Paste USPS tracking here")
@@ -64,7 +64,9 @@ if st.button("Start Tracking", type="primary"):
                         city = latest.get('eventCity', 'N/A')
                         state = latest.get('eventState', 'N/A')
                         zip_c = latest.get('eventZIPCode', 'N/A')
-                        raw_time = latest.get('eventDateTime', 'N/A')
+                        # print(events)
+                        raw_time = latest.get('eventDateTime') or latest.get('eventTimestamp') or "N/A"
+                        print(latest)
                         if raw_time != "N/A":
                             last_time = raw_time.replace('T', ' ').split('.')[0].replace('Z', '')
 
@@ -77,11 +79,11 @@ if st.button("Start Tracking", type="primary"):
                     })
                 
                 progress_bar.progress((i + len(batch)) / len(tracking_list))
-                time.sleep(0.5)
+                time.sleep(0.1)
 
             st.success("Success!")
             final_df = pd.DataFrame(results_accumulator)
-            st.dataframe(final_df, use_container_width=True)
+            st.dataframe(final_df, width=1500)
             
             csv = final_df.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Download Results", csv, "usps_report.csv", "text/csv")
