@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
 import time
+import requests
 from usps_utils import get_access_token, track_packages
-
+from gofo_utils import track_gofo_web_api
 st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
 
 st.title("📦 USPS Bulk Tracking Tool")
@@ -27,6 +28,8 @@ edited_df = st.data_editor(
         "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="Paste USPS tracking here")
     }
 )
+
+track_gofo_web_api()
 
 # 2. Process Button
 if st.button("Start Tracking", type="primary"):
