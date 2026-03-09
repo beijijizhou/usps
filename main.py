@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import requests
 from usps_utils import get_access_token, track_packages
-from gofo_utils import track_gofo_web_api
+# from gofo_utils import track_gofo_web_api
 st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
 
 st.title("📦 USPS Bulk Tracking Tool")
@@ -29,7 +29,7 @@ edited_df = st.data_editor(
     }
 )
 
-track_gofo_web_api()
+
 
 # 2. Process Button
 if st.button("Start Tracking", type="primary"):
@@ -49,7 +49,7 @@ if st.button("Start Tracking", type="primary"):
                 (df_clean["Tracking Number"].str.startswith("9")) &
                 (df_clean["Tracking Number"].str.len() >= 20)
             ]
-            tracking_list = valid_usps_data["Tracking Number"].tolist()
+            usps_tracking_list = valid_usps_data["Tracking Number"].tolist()
             order_map = dict(
                 zip(valid_usps_data["Tracking Number"], valid_usps_data["Order ID"]))
 
@@ -57,8 +57,8 @@ if st.button("Start Tracking", type="primary"):
             progress_bar = st.progress(0)
 
             batch_size = 35
-            for i in range(0, len(tracking_list), batch_size):
-                batch = tracking_list[i: i + batch_size]
+            for i in range(0, len(usps_tracking_list), batch_size):
+                batch = usps_tracking_list[i: i + batch_size]
                 batch_results = track_packages(token, batch)
 
                 for package in batch_results:
@@ -88,7 +88,7 @@ if st.button("Start Tracking", type="primary"):
                         "Location": f"{city}, {state} {zip_c}"
                     })
 
-                progress_bar.progress((i + len(batch)) / len(tracking_list))
+                progress_bar.progress((i + len(batch)) / len(usps_tracking_list))
                 time.sleep(0.1)
 
             st.success("Success!")
