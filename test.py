@@ -1,5 +1,5 @@
 import time
-from gofo_utils import track_gofo_web_api
+from courier.gofo_courier import track_gofo_web_api
 
 def parse_gofo_contents(api_response):
     """
