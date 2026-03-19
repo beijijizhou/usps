@@ -1,7 +1,8 @@
-from courier.shipping_controller import run_shipping_controller
+from S2B.scanButton import render_scan_buttons
 import streamlit as st
 import pandas as pd
-
+from usps_utils import run_usps_tracking_process
+from S2B.scan import push_delivery_print
 st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
 
 st.title("📦 USPS Bulk Tracking Tool")
@@ -29,15 +30,26 @@ edited_df = st.data_editor(
 
 
 # 2. Process Button
-if st.button("Track Shipments"):
-    p_bar = st.progress(0)
-    msg = st.empty()
-    
-    # You can loop through multiple couriers easily
-    results = []
-    for carrier in ["GOFO", "USPS"]:
-        results.extend(run_shipping_controller(edited_df, carrier, p_bar, msg))
-    
-    if results:
-        st.success("All Tracking Finished!")
-        st.dataframe(pd.DataFrame(results))
+if st.button("Start Tracking", type="primary"):
+    # Filter out any rows where the tracking number is empty
+    df_clean = edited_df.fillna("").astype(str)
+    valid_data = df_clean[df_clean["Tracking Number"].str.strip() != ""]
+    if valid_data.empty:
+        st.warning("Please enter at least one Tracking Number in the table.")
+    else:
+        try:
+            status_message = st.empty()
+            progress_bar = st.progress(0, text="Initializing...")
+            results = run_usps_tracking_process(valid_data, progress_bar=progress_bar,
+                                                status_text=status_message)
+            if results:
+                final_df = pd.DataFrame(results)
+                st.dataframe(final_df)
+            else:
+                st.info("No valid USPS tracking numbers found in the input.")
+
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
+
+
+render_scan_buttons(order_ids=edited_df["Order ID"].tolist())

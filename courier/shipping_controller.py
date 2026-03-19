@@ -10,7 +10,7 @@ def run_shipping_controller(df, courier_name, progress_bar, status_text):
     if courier_name == "GOFO":
         valid_df = df_clean[df_clean["Tracking Number"].str.startswith("GF")]
         specific_map = dict(zip(valid_df["Tracking Number"], valid_df["Order ID"]))
-        handler = GofoCourier(specific_map)
+        # handler = GofoCourier(specific_map)
         
     elif courier_name == "USPS":
         # USPS filter: starts with 9 and has a reasonable length

@@ -3,7 +3,8 @@ import streamlit as st
 from courier.base_courier import BaseCourier
 
 class UspsCourier(BaseCourier):
-    def __init__(self):
+    def __init__(self,order_map):
+        super().__init__(order_map)
         self.client_id = st.secrets["USPS_CLIENT_ID"]
         self.client_secret = st.secrets["USPS_CLIENT_SECRET"]
 

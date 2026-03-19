@@ -33,30 +33,33 @@ def fetch_records():
 
         data = response.json()
         records = data.get("records", [])
+        print("Records found:")
         
+        print(records)
         # 1. Extract the 'no' field
         order_numbers = [record.get("no") for record in records if record.get("no")]
         total = len(order_numbers)
         print(f"--- Starting Batch Scan of {total} items ---")
         
         # 2. Loop through and scan one by one
-        for index, order_no in enumerate(order_numbers, 1):
-            print(f"[{index}/{total}] Scanning: {order_no}")
+        # for index, order_no in enumerate(order_numbers, 1):
+        #     print(f"[{index}/{total}] Scanning: {order_no}")
             
-            try:
-                scanID(order_no)
-                # Optional: print(f"Successfully scanned: {order_no}")
-            except Exception as scan_err:
-                print(f"Error scanning {order_no}: {scan_err}")
+        #     try:
+        #         scanID(order_no)
+        #         # Optional: print(f"Successfully scanned: {order_no}")
+        #     except Exception as scan_err:
+        #         print(f"Error scanning {order_no}: {scan_err}")
 
-            # 3. Add a small pause (0.1s) if the server starts blocking you
-            # time.sleep(0.1) 
+        #     # 3. Add a small pause (0.1s) if the server starts blocking you
+        #     # time.sleep(0.1) 
         
-        return order_numbers
+        # return order_numbers
 
     except Exception as e:
         print(f"Connection error: {e}")
         return []
 
 if __name__ == "__main__":
+    print("Fetching records...")
     fetch_records()
