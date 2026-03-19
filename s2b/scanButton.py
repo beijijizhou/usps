@@ -1,42 +1,38 @@
 import streamlit as st
-import time
-# Ensure the path to scan.py is correct based on your folder structure
-from S2B.scan import push_delivery_print
+from S2B.scan import push_delivery_print, TOKENS
 
 def render_scan_buttons(order_ids=None):
-    """
-    Renders the tracking and S2B scan buttons.
-    Accepts a list of order_ids to process.
-    """
     col1, col2 = st.columns(2)
 
+    with col1:
+        if st.button("S2B UV Scan", use_container_width=True, type="primary"):
+            run_batch_process(order_ids, "UV Scan", TOKENS["UV"])
 
     with col2:
-        if st.button("S2B UV Scan", use_container_width=True):
-            if not order_ids:
-                st.warning("No Order IDs available to scan.")
-                return None
+        if st.button("S2B T-Shirt Scan", use_container_width=True):
+            run_batch_process(order_ids, "T-Shirt Scan", TOKENS["T-Shirt"])
 
-            # If order_ids is a single string, convert to list for consistency
-            ids_to_scan = [order_ids] if isinstance(order_ids, str) else order_ids
+def run_batch_process(order_ids, label, token):
+    if not order_ids:
+        st.warning(f"No Order IDs available for {label}.")
+        return
+
+    ids_to_scan = [order_ids] if isinstance(order_ids, str) else order_ids
+    progress_bar = st.progress(0)
+    
+    for i, order_id in enumerate(ids_to_scan):
+        try:
+            # Pass the specific token here
+            result = push_delivery_print(order_id, token)
             
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-
-            for i, order_id in enumerate(ids_to_scan):
-                status_text.text(f"Processing ({i+1}/{len(ids_to_scan)}): {order_id}")
-                result = push_delivery_print(order_id)
-                if result and result.get("status_code") == 200:
-                    st.toast(f"✅ {order_id} pushed", icon="🚀")
-                else:
-                    # Extract the specific error message from the API (e.g., "非本工厂订单")
-                    error_msg = result.get("msg", "Unknown Error")
-                    st.error(f"❌ {order_id}: {error_msg}")
+            if result and result.get("status_code") == 200:
+                st.toast(f"✅ {order_id} ({label}) pushed", icon="🚀")
+            else:
+                st.error(f"❌ {order_id} failed (Check Token/ID)")
                 
-                # Update progress bar
-                progress_bar.progress((i + 1) / len(ids_to_scan))
-            
-            st.success(f"Batch scan complete for {len(ids_to_scan)} orders.")
-            return "s2b_complete"
-            
-    return None
+        except Exception as e:
+            st.error(f"Error: {e}")
+        
+        progress_bar.progress((i + 1) / len(ids_to_scan))
+    
+    st.success(f"{label} Complete!")

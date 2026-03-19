@@ -1,8 +1,10 @@
 from S2B.scanButton import render_scan_buttons
+from SDS.SDS_3 import render_sds3_widgets
 import streamlit as st
 import pandas as pd
 from usps_utils import run_usps_tracking_process
 from S2B.scan import push_delivery_print
+from SDS.buttons import render_SDS_3_fetch_button   
 st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
 
 st.title("📦 USPS Bulk Tracking Tool")
@@ -53,3 +55,7 @@ if st.button("Start Tracking", type="primary"):
 
 
 render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
+
+render_SDS_3_fetch_button()
+
+render_sds3_widgets()

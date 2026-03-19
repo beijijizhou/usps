@@ -1,19 +1,24 @@
 import requests
+TOKENS = {
+    "UV": "852457|c7MWRubJVYYQ9AoisDzRRZWuKr53k4O8ESbjnWbS",
+    "T-Shirt": "853860|2I68kVWFcn1x426A9oGQDrUbwWyFblB1vF1sNikh"
+}
 
-def push_delivery_print(order_code):
+def push_delivery_print(order_code, token=None  ):
+    
     """
     Sends a POST request to goodsDeliveryPrint with the order code payload.
     """
     url = "https://factory.s2bdiy.com/req/factory/delivery/goodsDeliveryPrint"
     
     # Your Bearer Token
-    bearer_token = "852457|c7MWRubJVYYQ9AoisDzRRZWuKr53k4O8ESbjnWbS"
+    # bearer_token = "852457|c7MWRubJVYYQ9AoisDzRRZWuKr53k4O8ESbjnWbS"
     # bearer_token = "853860|2I68kVWFcn1x426A9oGQDrUbwWyFblB1vF1sNikh"
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {bearer_token}"
+        "Authorization": f"Bearer {token}"
     }
 
     # The payload (body) of the POST request
