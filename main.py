@@ -6,12 +6,12 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # 2. Add that directory to the very beginning of the Python path
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
-from S2B.scanButton import render_scan_buttons
+from s2b.scanButton  import render_scan_buttons
 from SDS.SDS_3 import render_sds3_widgets
 import streamlit as st
 import pandas as pd
 from usps_utils import run_usps_tracking_process
-from S2B.scan import push_delivery_print
+
 from SDS.buttons import render_SDS_3_fetch_button   
 st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
 
