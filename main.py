@@ -1,15 +1,11 @@
 # DEBUG INFO
 import os
 import sys
-print(f"DEBUG: Current Working Directory: {os.getcwd()}")
-print(f"DEBUG: __file__ path: {os.path.abspath(__file__)}")
-print(f"DEBUG: Directory contents: {os.listdir(os.getcwd())}")
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Force the path to be the folder containing main.py
-root_path = os.path.dirname(os.path.abspath(__file__))
-os.chdir(root_path)
-if root_path not in sys.path:
-    sys.path.insert(0, root_path)
+# 2. Add that directory to the very beginning of the Python path
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 from S2B.scanButton import render_scan_buttons
 from SDS.SDS_3 import render_sds3_widgets
 import streamlit as st
