@@ -1,3 +1,8 @@
+import sys
+import os
+
+# Ensure the directory containing main.py is in the search path
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from S2B.scanButton import render_scan_buttons
 from SDS.SDS_3 import render_sds3_widgets
 import streamlit as st
