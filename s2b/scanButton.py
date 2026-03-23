@@ -1,5 +1,5 @@
 import streamlit as st
-from S2B.scan import push_delivery_print, TOKENS
+from s2b.scan import push_delivery_print, TOKENS
 
 def render_scan_buttons(order_ids=None):
     col1, col2 = st.columns(2)
