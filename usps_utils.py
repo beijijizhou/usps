@@ -21,6 +21,7 @@ def track_packages(token, tracking_numbers):
     }
     payload = [{"trackingNumber": str(tn).strip()} for tn in tracking_numbers if tn.strip()]
     response = requests.post(url, json=payload, headers=headers)
+    print(f"API Request Sent: {len(payload)} tracking numbers. Status Code: {response.status_code}")
     return response.json()
 
 def run_usps_tracking_process(df, progress_bar=None, status_text=None):
@@ -36,9 +37,9 @@ def run_usps_tracking_process(df, progress_bar=None, status_text=None):
     df_clean = df.fillna("").astype(str)
     valid_data = df_clean[
         (df_clean["Tracking Number"].str.startswith("9")) & 
-        (df_clean["Tracking Number"].str.len() >= 20)
+        (df_clean["Tracking Number"].str.len() >= 10)
     ]
-    
+    # print(f"Found {len(valid_data)} valid USPS tracking numbers to process.")
     if valid_data.empty:
         return []
 
@@ -65,7 +66,7 @@ def run_usps_tracking_process(df, progress_bar=None, status_text=None):
         # Execute API Request
         batch = tracking_list[i : i + batch_size]
         batch_results = track_packages(token, batch)
-
+        print(f"Batch {i // batch_size + 1}: Received response for {len(batch_results)} packages.")
         if isinstance(batch_results, list):
             for package in batch_results:
                 num = package.get('trackingNumber')
@@ -90,7 +91,7 @@ def run_usps_tracking_process(df, progress_bar=None, status_text=None):
                     "Location": f"{city}, {state} {zip_c}"
                 })
         
-        time.sleep(0.1) # Respect rate limits
+        time.sleep(0.01) # Respect rate limits
 
     # 4. Finalize UI
     if progress_bar:

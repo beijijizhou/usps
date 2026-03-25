@@ -62,8 +62,8 @@ if st.button("Start Tracking", type="primary"):
             st.error(f"An error occurred: {str(e)}")
 
 
-# render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
+render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
 
-# render_SDS_3_fetch_button()
+render_SDS_3_fetch_button()
 
-# render_sds3_widgets()
+render_sds3_widgets()
