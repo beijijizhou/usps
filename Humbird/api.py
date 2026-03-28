@@ -3,15 +3,15 @@ from urllib import response
 import requests
 import json
 
-TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc1N1cGVyTWFuYWdlciI6ZmFsc2UsImdyb3VwSWQiOjIwMjQ1MTEzMSwicmVsVHlwZSI6Miwic2Vzc2lvbklkIjoiNGY1ZjNmOWQyYjUxNDU2YmJiZjFkMGVmYmU5ZThlZWUiLCJyZWxBcHBJZCI6MjU3MjY2OCwidXNlcklkIjoxMDA3NTAxLCJhcHBPcGVyYXRpb25QbGF0Zm9ybSI6ZmFsc2UsImNsaWVudFR5cGUiOjEsImFwcFR5cGUiOjEwMiwiYXBwSWQiOjI2MDI5NDcsInNjb3BlIjoiYWRtaW4iLCJ1c2VyVHlwZSI6OSwiaXNTVmlwIjp0cnVlLCJ1c2VybmFtZSI6IjI1NzI2NjhfMTg2NTAyODYwMjgifQ.oBOuBw369370G9KVt9iGShwuPPAx3SbabPTcYkQmySS8auHUnToXeNqK2UlWL0dqHRoyaX_wCG7SzW6J0PpmJA"
+TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc1N1cGVyTWFuYWdlciI6ZmFsc2UsImdyb3VwSWQiOjIwMjQ1MTEzMSwicmVsVHlwZSI6Miwic2Vzc2lvbklkIjoiMzUyNDNhYzVjYjViNDFjZWFlNzc3YzRhNmU2YWJmMmEiLCJyZWxBcHBJZCI6MjU3MjY2OCwidXNlcklkIjoxMDA3NTAxLCJhcHBPcGVyYXRpb25QbGF0Zm9ybSI6ZmFsc2UsImNsaWVudFR5cGUiOjEsImFwcFR5cGUiOjEwMiwiYXBwSWQiOjI2MDI5NDcsInNjb3BlIjoiYWRtaW4iLCJ1c2VyVHlwZSI6OSwiaXNTVmlwIjp0cnVlLCJ1c2VybmFtZSI6IjI1NzI2NjhfMTg2NTAyODYwMjgifQ.zEFH2kSQV7ap5MEEukBpNFIorDMm0Fwjwr52uDnXRkN1o7VyH60JhXmjtckuYmc_gHJnSimsV1Ob9M6nxJLUoA"
 headers = {
     "accept": "application/json, text/plain, */*",
     "accept-language": "zh",
     "authorization": f"Bearer {TOKEN}",
     "content-type": "application/json;charset=UTF-8",
-    "nonce": "567744",
-    "sign": "fc5d70330cc21ca0200492f4fd4e40b918f79624aef3f405ac8866e1a98710ae",
-    "stamp": "1774581689141",
+    "nonce": "323519",
+    "sign": "bef00468759660293e13bb61ffe8df09cc60de9ce8ab4eb4cef0332bff4d1f1b",
+    "stamp": "1774660508641",
     "priority": "u=1, i",
     "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
     "sec-ch-ua-mobile": "?0",
@@ -41,7 +41,7 @@ def fetch_humbird_page():
         if response.status_code == 200:
             data = response.json()
             records = data.get("data", {}).get("list", [])
-            ids = [r.get("id") for r in records if r.get("id")]
+            ids = [r.get("rel_id") for r in records if r.get("rel_id")]
             return ids
         else:
             print(f"Error {response.status_code}: {response.text}")
@@ -105,14 +105,16 @@ def fetch_humbird_order_details(order_ids):
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
         }
         payload_raw = '{"order_ids":["888199380862025217","888199389485579777","888199385937198593","888199398838812161","888199374251802113","888199377389141505","888199376139238913","888199379041762817","888199382648864257","888199404752879105","888199401657482753","888199391113002497","888199387422014978","888199397303795201","888199384385338881","888199403184111105","888199406162066945","888199392295697921","888199393948319233","888199395592486401"],"query_field_list":["third_detail"]}'
-
+        payload_new = json.dumps(payload, separators=(',', ':'))  # Minify JSON
+       
 # THE ACTUAL CALL
         response = requests.post(
             "https://apigw.hihumbird.com/oc/v2/orders/list",
             headers=headers,
-            data=payload_raw  # Use 'data' for raw strings
+            data=payload_new  # Use 'data' for raw strings
         )
         if response.status_code == 200:
+            
             return response.json()
         else:
             print(f"Failed! Status: {response.status_code}")

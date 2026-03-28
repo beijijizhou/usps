@@ -18,10 +18,23 @@ def render_humbird_workflow():
         if st.button("Step 2: Fetch Full Details for these IDs"):
             with st.spinner("Fetching details..."):
                 # Step 2: Pass those IDs into the second function
-                details = fetch_humbird_order_details(st.session_state.humbird_order_ids)
-                
-                if details:
+                response_data = fetch_humbird_order_details(st.session_state.humbird_order_ids)
+               
+                tracking_numbers = []
+                print("Full Detail Response:", response_data)  # Debug print to inspect the structure
+                if response_data.get("result_code") == 200:
+                    orders = response_data.get("data", [])
+                    for order in orders:
+        # Get th    e third_detail dictionary
+                        third_detail = order.get("third_detail", {})
+
+        # Get th    e list of tracking numbers (usually contains just one)
+                        numbers = third_detail.get("track_number_list", [])
+        
+        # Add them to our main list
+                    tracking_numbers.extend(numbers)
+                if response_data.get("result_code") == 200 and tracking_numbers:
                     st.success("Details Received!")
-                    st.json(details) # This contains your 'third_detail' info
+                    st.json(tracking_numbers ) # This contains your 'third_detail' info
                 else:
                     st.error("Detail fetch failed. Sign for the Detail API might be different/expired.")
