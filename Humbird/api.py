@@ -3,15 +3,18 @@ from urllib import response
 import requests
 import json
 
-TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc1N1cGVyTWFuYWdlciI6ZmFsc2UsImdyb3VwSWQiOjIwMjQ1MTEzMSwicmVsVHlwZSI6Miwic2Vzc2lvbklkIjoiMzUyNDNhYzVjYjViNDFjZWFlNzc3YzRhNmU2YWJmMmEiLCJyZWxBcHBJZCI6MjU3MjY2OCwidXNlcklkIjoxMDA3NTAxLCJhcHBPcGVyYXRpb25QbGF0Zm9ybSI6ZmFsc2UsImNsaWVudFR5cGUiOjEsImFwcFR5cGUiOjEwMiwiYXBwSWQiOjI2MDI5NDcsInNjb3BlIjoiYWRtaW4iLCJ1c2VyVHlwZSI6OSwiaXNTVmlwIjp0cnVlLCJ1c2VybmFtZSI6IjI1NzI2NjhfMTg2NTAyODYwMjgifQ.zEFH2kSQV7ap5MEEukBpNFIorDMm0Fwjwr52uDnXRkN1o7VyH60JhXmjtckuYmc_gHJnSimsV1Ob9M6nxJLUoA"
+TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc1N1cGVyTWFuYWdlciI6ZmFsc2UsImdyb3VwSWQiOjIwMjQ1MTEzMSwicmVsVHlwZSI6Miwic2Vzc2lvbklkIjoiMjBlMmIxNWM1NTVhNGFkZjgyYTQyNzQ5MjZhZDlhNzMiLCJyZWxBcHBJZCI6MjU3MjY2OCwidXNlcklkIjoxMDA3NTAxLCJhcHBPcGVyYXRpb25QbGF0Zm9ybSI6ZmFsc2UsImNsaWVudFR5cGUiOjEsImFwcFR5cGUiOjEwMiwiYXBwSWQiOjI2MDI5NDcsInNjb3BlIjoiYWRtaW4iLCJ1c2VyVHlwZSI6OSwiaXNTVmlwIjp0cnVlLCJ1c2VybmFtZSI6IjI1NzI2NjhfMTg2NTAyODYwMjgifQ.hnNIJt7yOvv_HjH_Ovb1IOeFXPsQixVR8tuMGvsXyN4qh9fIwb2Xixr8BnKIcBzcvW8FlNkf0LB2pSj0P4wu8A"
+get_order_nonce = "394266"
+sign = "ebb10288176da7276905f20e00ef22c4dbea94166e26f758ddbea1cd1c9c7e4b"
+stamp = "1774817820131"
 headers = {
     "accept": "application/json, text/plain, */*",
     "accept-language": "zh",
     "authorization": f"Bearer {TOKEN}",
     "content-type": "application/json;charset=UTF-8",
-    "nonce": "323519",
-    "sign": "bef00468759660293e13bb61ffe8df09cc60de9ce8ab4eb4cef0332bff4d1f1b",
-    "stamp": "1774660508641",
+    "nonce": get_order_nonce,
+    "sign": sign,
+    "stamp": stamp,
     "priority": "u=1, i",
     "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
     "sec-ch-ua-mobile": "?0",
@@ -51,36 +54,19 @@ def fetch_humbird_page():
         return None
 
 
-def fetch_humbird_order_details(order_ids):
+def fetch_humbird_order_details():
     """
     Mimics the cURL for https://apigw.hihumbird.com/oc/v2/orders/list
     Args:
         order_ids (list): List of strings extracted from the Page API
     """
-    url = "https://apigw.hihumbird.com/oc/v2/orders/list"
-
+    get_tracking_nonce = "809348"  # This is the same nonce used in your cURL for the detail fetch
+    get_tracking_stamp = "1774817820638"
+    get_tracking_sign = "299be2e2841f4577c4ab2ecdae4fc92cb46702fc9e6e6b0e8a796f26e63ff9ed"
     # 1. EXACT Headers from your cURL
     # Note: These values (sign/nonce/stamp) are specific to the cURL body.
     # If the order_ids change significantly, the sign will likely fail.
-    headers = {
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'zh',
-        'authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc1N1cGVyTWFuYWdlciI6ZmFsc2UsImdyb3VwSWQiOjIwMjQ1MTEzMSwicmVsVHlwZSI6Miwic2Vzc2lvbklkIjoiNGY1ZjNmOWQyYjUxNDU2YmJiZjFkMGVmYmU5ZThlZWUiLCJyZWxBcHBJZCI6MjU3MjY2OCwidXNlcklkIjoxMDA3NTAxLCJhcHBPcGVyYXRpb25QbGF0Zm9ybSI6ZmFsc2UsImNsaWVudFR5cGUiOjEsImFwcFR5cGUiOjEwMiwiYXBwSWQiOjI2MDI5NDcsInNjb3BlIjoiYWRtaW4iLCJ1c2VyVHlwZSI6OSwiaXNTVmlwIjp0cnVlLCJ1c2VybmFtZSI6IjI1NzI2NjhfMTg2NTAyODYwMjgifQ.oBOuBw369370G9KVt9iGShwuPPAx3SbabPTcYkQmySS8auHUnToXeNqK2UlWL0dqHRoyaX_wCG7SzW6J0PpmJA',
-        'content-type': 'application/json;charset=UTF-8',
-        'nonce': '484203',
-        'origin': 'https://flyshark.merchant.hihumbird.com',
-        'priority': 'u=1, i',
-        'referer': 'https://flyshark.merchant.hihumbird.com/',
-        'sec-ch-ua': '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"macOS"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'sign': '543091f43c36e0d137dcaa55a69975026a6382fcf6fa4ed217427740ed026670',
-        'stamp': '1774584236121',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36'
-    }
+    order_ids = fetch_humbird_page()
 
     # 2. Reconstruct the body structure
     payload = {
@@ -96,15 +82,14 @@ def fetch_humbird_order_details(order_ids):
         headers = {
             "accept": "application/json, text/plain, */*",
             "accept-language": "zh",
-            "authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc1N1cGVyTWFuYWdlciI6ZmFsc2UsImdyb3VwSWQiOjIwMjQ1MTEzMSwicmVsVHlwZSI6Miwic2Vzc2lvbklkIjoiNGY1ZjNmOWQyYjUxNDU2YmJiZjFkMGVmYmU5ZThlZWUiLCJyZWxBcHBJZCI6MjU3MjY2OCwidXNlcklkIjoxMDA3NTAxLCJhcHBPcGVyYXRpb25QbGF0Zm9ybSI6ZmFsc2UsImNsaWVudFR5cGUiOjEsImFwcFR5cGUiOjEwMiwiYXBwSWQiOjI2MDI5NDcsInNjb3BlIjoiYWRtaW4iLCJ1c2VyVHlwZSI6OSwiaXNTVmlwIjp0cnVlLCJ1c2VybmFtZSI6IjI1NzI2NjhfMTg2NTAyODYwMjgifQ.oBOuBw369370G9KVt9iGShwuPPAx3SbabPTcYkQmySS8auHUnToXeNqK2UlWL0dqHRoyaX_wCG7SzW6J0PpmJA",
+            "authorization": f"Bearer {TOKEN}",
             "content-type": "application/json;charset=UTF-8",
-            "nonce": "484203",
-            "sign": "543091f43c36e0d137dcaa55a69975026a6382fcf6fa4ed217427740ed026670",
-            "stamp": "1774584236121",
+            "nonce": get_tracking_nonce,
+            "sign": get_tracking_sign,
+            "stamp": get_tracking_stamp,
             "Referer": "https://flyshark.merchant.hihumbird.com/",
             "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
         }
-        payload_raw = '{"order_ids":["888199380862025217","888199389485579777","888199385937198593","888199398838812161","888199374251802113","888199377389141505","888199376139238913","888199379041762817","888199382648864257","888199404752879105","888199401657482753","888199391113002497","888199387422014978","888199397303795201","888199384385338881","888199403184111105","888199406162066945","888199392295697921","888199393948319233","888199395592486401"],"query_field_list":["third_detail"]}'
         payload_new = json.dumps(payload, separators=(',', ':'))  # Minify JSON
        
 # THE ACTUAL CALL
