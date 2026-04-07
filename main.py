@@ -6,6 +6,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # 2. Add that directory to the very beginning of the Python path
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
+from HS.scanner_tool import render_HS_scanner_ui
 from s2b.scanButton  import render_scan_buttons
 from SDS.SDS_3 import render_sds3_widgets
 import streamlit as st
@@ -68,3 +69,5 @@ render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
 
 # render_sds3_widgets()
 render_humbird_workflow()
+
+render_HS_scanner_ui()
