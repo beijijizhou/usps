@@ -1,7 +1,7 @@
 import requests
 TOKENS = {
     "UV": "852457|c7MWRubJVYYQ9AoisDzRRZWuKr53k4O8ESbjnWbS",
-    "T-Shirt": "853860|2I68kVWFcn1x426A9oGQDrUbwWyFblB1vF1sNikh"
+    "T-Shirt": "893195|w7BHEvhs37Za3HKH5JKEIzyiB1tlWSrtPS6d1AYn"
 }
 
 def push_delivery_print(order_code, token=None  ):

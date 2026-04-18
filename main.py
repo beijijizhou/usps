@@ -1,4 +1,12 @@
 # DEBUG INFO
+from SDS.buttons import render_SDS_3_fetch_button
+from Humbird.button import render_humbird_workflow
+from usps_utils import run_usps_tracking_process
+import pandas as pd
+import streamlit as st
+from SDS.SDS import render_SDS_widgets
+from s2b.scanButton import render_scan_buttons
+from HS.scanner_tool import render_HS_scanner_ui
 import os
 import sys
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -6,14 +14,6 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 # 2. Add that directory to the very beginning of the Python path
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
-from HS.scanner_tool import render_HS_scanner_ui
-from s2b.scanButton  import render_scan_buttons
-from SDS.SDS_3 import render_sds3_widgets
-import streamlit as st
-import pandas as pd
-from usps_utils import run_usps_tracking_process
-from Humbird.button import render_humbird_workflow
-from SDS.buttons import render_SDS_3_fetch_button   
 st.set_page_config(layout="wide", page_title="USPS Bulk Tracker")
 
 st.title("📦 USPS Bulk Tracking Tool")
@@ -71,3 +71,5 @@ render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
 render_humbird_workflow()
 
 render_HS_scanner_ui()
+
+render_SDS_widgets()
