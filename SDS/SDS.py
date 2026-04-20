@@ -11,7 +11,7 @@ def render_SDS_widgets():
     st.markdown("### 🛠️ SDS Operations")
 
     # 1. The Fetch Button
-    if st.button("🔍 Fetch SDS Records", use_container_width=True):
+    if st.button("🔍 获取平台生产中订单", use_container_width=True):
         with st.spinner("Connecting to SDS Factory API..."):
             # This calls the function from your sds_fetch.py
             ids = factory_fetch_records()

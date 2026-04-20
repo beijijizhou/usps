@@ -5,7 +5,7 @@ def render_SDS_3_fetch_button():
     """
     Renders the button to pull latest records from the SDS 3 Factory API.
     """
-    st.subheader("📦 SDS 3 Factory Orders")
+    st.subheader("📦 SDS Factory Orders")
     
     # Initialize session state for records if it doesn't exist
     if "order_list" not in st.session_state:

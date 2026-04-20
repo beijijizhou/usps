@@ -1,7 +1,7 @@
 import requests
 import time
 
-QA_token ="sds-pod:4a120912-6ced-4d77-80b0-a125d16daf6a"
+QA_token ="sds-pod:b07b0f28-8c71-4e7c-bee1-8fcf08137a07"
 
 factory_headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -13,7 +13,7 @@ def scanID(order_no):
     """
     Tests the QC API for a specific order number.
     """
-    url = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast"   
+    url = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast?"   
     # Generate the 't' timestamp in milliseconds
     timestamp_ms = int(time.time() * 1000)
     
