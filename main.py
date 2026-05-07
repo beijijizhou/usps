@@ -31,21 +31,27 @@ st.caption(
     "You can copy/paste directly from Excel or Google Sheets into this table.")
 
 # The Data Editor acts as your "Spreadsheet" input
+
+
+
+c1, c2 = st.columns(2)
+
 edited_df = st.data_editor(
     st.session_state.df_input,
     num_rows="dynamic",  # Allows users to add/delete rows
     width='stretch',
     column_config={
-        "Order ID": st.column_config.TextColumn("Order ID", help="Your internal reference"),
-        "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="Paste USPS tracking here")
+        "Order ID": st.column_config.TextColumn("Order ID", help="生产订单号"),
+        "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="物流单号，必须填写"),
     }
 )
-count_orders, count_tracking = get_data_metrics(edited_df)
+# if edited_df is not None:
+#     st.session_state.df_input = edited_df
+    
+count_orders, count_tracking = get_data_metrics(st.session_state.df_input)
 
-c1, c2 = st.columns(2)
 c1.metric("📦 Total Order IDs", count_orders)
 c2.metric("🚚 Total Tracking Numbers", count_tracking)
-
 # 2. Process Button
 if st.button("Start Tracking", type="primary"):
     # Filter out any rows where the tracking number is empty

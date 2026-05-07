@@ -1,12 +1,13 @@
+import streamlit as st
+
 import requests
 import time
 
-QA_token ="sds-pod:b07b0f28-8c71-4e7c-bee1-8fcf08137a07"
+QA_token = st.session_state.get("qa_token")
 
 factory_headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "application/json, text/plain, */*",
-    "Cookie": "PASTE_YOUR_ACTUAL_COOKIE_STRING_HERE",
     "access-token":QA_token,
 }
 def scanID(order_no):

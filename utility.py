@@ -7,7 +7,7 @@ def get_data_metrics(df):
         
     # Ensure we treat everything as strings and handle NaNs
     temp_df = df.fillna("").astype(str)
-    
+   
     count_orders = len(temp_df[temp_df["Order ID"].str.strip() != ""])
     count_tracking = len(temp_df[temp_df["Tracking Number"].str.strip() != ""])
     
