@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 def get_label_data(label_no):
-    auth_token = "699a462a-06b0-4a8e-87ea-b01ebdf614ad"
+    auth_token = "fbed922a-ae25-4b05-ae34-62a3434c4bdc"
 
     """The background function that talks to the tshirt.riin.com API."""
     url = "https://tshirt.riin.com/manufacture/deliverGoodsLabel/scan/labelNo"

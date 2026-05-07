@@ -9,6 +9,8 @@ from s2b.scanButton import render_scan_buttons
 from HS.scanner_tool import render_HS_scanner_ui
 import os
 import sys
+
+from utility import get_data_metrics
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 2. Add that directory to the very beginning of the Python path
@@ -38,7 +40,11 @@ edited_df = st.data_editor(
         "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="Paste USPS tracking here")
     }
 )
+count_orders, count_tracking = get_data_metrics(edited_df)
 
+c1, c2 = st.columns(2)
+c1.metric("📦 Total Order IDs", count_orders)
+c2.metric("🚚 Total Tracking Numbers", count_tracking)
 
 # 2. Process Button
 if st.button("Start Tracking", type="primary"):
@@ -64,7 +70,7 @@ if st.button("Start Tracking", type="primary"):
 
 
 render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
-
+render_SDS_widgets()
 # render_SDS_3_fetch_button()
 
 # render_sds3_widgets()
@@ -72,4 +78,4 @@ render_humbird_workflow()
 
 render_HS_scanner_ui()
 
-render_SDS_widgets()
+

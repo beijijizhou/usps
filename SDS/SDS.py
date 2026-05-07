@@ -1,67 +1,95 @@
 import streamlit as st
+import pandas as pd
+import requests
 import time
-from SDS.factoryFetch import factory_fetch_records  # Your SDS fetch logic
-from SDS.QA_scan import scanID                   # Your QC scan logic
 
+QA_token = "sds-pod:b07b0f28-8c71-4e7c-bee1-8fcf08137a07"
 
+# --- API Logic ---
+def scanID(order_no):
+    url = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast?"   
+    timestamp_ms = int(time.time() * 1000)
+    
+    # Ensure headers include your token/cookie correctly
+    headers = {
+        "User-Agent": "Mozilla/5.0...",
+        "Accept": "application/json, text/plain, */*",
+        "access-token": QA_token,
+       
+    }
+    
+    params = {"no": order_no, "t": timestamp_ms}
+    print(f"Scanning Order: {order_no} with params: {params}")
+    try:
+        r = "1"
+        # r = requests.get(url, params=params, headers=headers, timeout=10)
+        if r.status_code == 200:
+            return r.json()
+    except Exception as e:
+        return {"status": "error", "msg": str(e)}
+    return None
+
+# --- Streamlit UI ---
 def render_SDS_widgets():
-    """
-    Renders the SDS Fetching and QC Scanning interface.
-    """
-    st.markdown("### 🛠️ SDS Operations")
-
-    # 1. The Fetch Button
-    if st.button("🔍 获取平台生产中订单", use_container_width=True):
-        with st.spinner("Connecting to SDS Factory API..."):
-            # This calls the function from your sds_fetch.py
-            ids = factory_fetch_records()
-
-            if ids:
-                st.session_state.sds3_order_list = ids
-                st.success(f"SDS: Found {len(ids)} records.")
-            else:
-                st.error(
-                    "SDS Error: No records found. Please check your Token/Cookie.")
-
     st.divider()
+    st.markdown("### 🛠️ SDS 1号线 订单操作")
 
-    # 2. The Batch Scan Button
-    # Only enabled if there are IDs in the list
-    if "sds3_order_list" in st.session_state and st.session_state.sds3_order_list:
-        order_ids = st.session_state.sds3_order_list
-        st.info(f"Currently holding **{len(order_ids)}** IDs from SDS.")
+    # Column layout for the two main actions
+    col1, col2 = st.columns(2)
 
-        if st.button("🚀 Run SDS QC Batch Scan", type="primary", use_container_width=True):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+    with col1:
+        # ACTION 1: Fetch IDs into the table
+        if st.button("🔍 获取生产中订单", use_container_width=True):
+            from SDS.factoryFetch import factory_fetch_records 
+            with st.spinner("Fetching..."):
+                ids = factory_fetch_records()
+                if ids:
+                    st.session_state.df_input = pd.DataFrame({
+                        "Order ID": ids,
+                        "Tracking Number": [""] * len(ids)
+                    })
+                    st.success(f"Injected {len(ids)} orders.")
+                    st.rerun()
 
-            results_log = []
+    with col2:
+        # ACTION 2: Scan the IDs currently in the table
+        if st.button("🚀 执行批量 面单获取", type="primary", use_container_width=True):
+            if "df_input" in st.session_state and not st.session_state.df_input.empty:
+                
+                # Get the list from the current state of the editor
+                order_ids = st.session_state.df_input["Order ID"].dropna().tolist()
+                
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                scan_log = []
 
-            for i, order_no in enumerate(order_ids):
-                status_text.text(
-                    f"Scanning SDS Order ({i+1}/{len(order_ids)}): {order_no}")
+                for i, order_no in enumerate(order_ids):
+                    if not str(order_no).strip(): continue
+                    
+                    status_text.text(f"Scanning {i+1}/{len(order_ids)}: {order_no}")
+                    
+                    # Run the API request
+                    result = scanID(str(order_no).strip())
+                    
+                    # Logic to determine success/fail based on API response structure
+                    is_success = result.get("code") == 200 or result.get("status") == "success"
+                    
+                    scan_log.append({
+                        "Order ID": order_no,
+                        "Scan Status": "✅ Success" if is_success else "❌ Failed",
+                        "API Message": result.get("msg", "No message") if result else "Connection Error"
+                    })
+                    
+                    progress_bar.progress((i + 1) / len(order_ids))
+                    time.sleep(0.1) # Small delay to be nice to the API
 
-                # Call the scanID function
-                response = scanID(order_no)
+                # Show results in a clean table below
+                st.session_state.scan_results_summary = pd.DataFrame(scan_log)
+                status_text.success("Batch Scan Completed!")
+            else:
+                st.warning("No Order IDs found in the table above to scan.")
 
-                # Check for success in the response
-                if response and response.get("status") == "success":
-                    results_log.append(f"✅ {order_no}: Success")
-                else:
-                    msg = response.get(
-                        "msg", "Scan Failed") if response else "No Response"
-                    results_log.append(f"❌ {order_no}: {msg}")
-                    st.warning(f"Issue with {order_no}: {msg}")
-
-                # Update progress
-                progress_bar.progress((i + 1) / len(order_ids))
-                time.sleep(0.05)  # Prevent overwhelming the API
-
-            st.success("SDS Batch Scan Complete!")
-
-            # Show a summary in an expander
-            with st.expander("View Full Scan Log"):
-                for entry in results_log:
-                    st.write(entry)
-    else:
-        st.caption("Fetch records first to enable the SDS Batch Scan.")
+    # Display Scan Results Summary if they exist
+    if "scan_results_summary" in st.session_state:
+        with st.expander("📄 查看扫描结果详情", expanded=True):
+            st.dataframe(st.session_state.scan_results_summary, use_container_width=True)

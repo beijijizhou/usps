@@ -38,7 +38,7 @@ def scanID(order_no):
         print(f"Scan failed: {e}")
         return None
 
-# --- Testing Block ---
+
 def run_batch_scan(ids):
     scan_results = []
     print(f"Starting batch scan for {len(ids)} orders...")
@@ -55,8 +55,5 @@ def run_batch_scan(ids):
             
     return scan_results
 
-# if __name__ == "__main__":
-#     all_data = run_batch_scan(order_ids)
-#     print(f"\nBatch Complete. Scanned {len(all_data)} items.")
 
 
