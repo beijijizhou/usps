@@ -55,5 +55,3 @@ def run_batch_scan(ids):
             
     return scan_results
 
-
-

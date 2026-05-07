@@ -3,8 +3,11 @@ import pandas as pd
 import requests
 import time
 
-QA_token = "sds-pod:b07b0f28-8c71-4e7c-bee1-8fcf08137a07"
+from SDS.pre_scan import get_factory_order_id, get_tracking_from_factory_id, run_batch_pre_scan
 
+QA_token = "sds-pod:b07b0f28-8c71-4e7c-bee1-8fcf08137a07"
+factory_order_id = get_factory_order_id(2006820000273575)
+print(get_tracking_from_factory_id(factory_order_id))
 # --- API Logic ---
 def scanID(order_no):
     url = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast?"   
@@ -39,7 +42,7 @@ def render_SDS_widgets():
 
     with col1:
         # ACTION 1: Fetch IDs into the table
-        if st.button("🔍 获取生产中订单", use_container_width=True):
+        if st.button("🔍 获取待排产订单", use_container_width=True):
             from SDS.factoryFetch import factory_fetch_records 
             with st.spinner("Fetching..."):
                 ids = factory_fetch_records()
@@ -48,6 +51,7 @@ def render_SDS_widgets():
                         "Order ID": ids,
                         "Tracking Number": [""] * len(ids)
                     })
+                      # Test the API with the first ID to ensure it works
                     st.success(f"Injected {len(ids)} orders.")
                     st.rerun()
 
@@ -69,7 +73,7 @@ def render_SDS_widgets():
                     status_text.text(f"Scanning {i+1}/{len(order_ids)}: {order_no}")
                     
                     # Run the API request
-                    result = scanID(str(order_no).strip())
+                    result = run_batch_pre_scan(str(order_no).strip())
                     
                     # Logic to determine success/fail based on API response structure
                     is_success = result.get("code") == 200 or result.get("status") == "success"
