@@ -1,6 +1,7 @@
 # DEBUG INFO
 from SDS.buttons import render_SDS_3_fetch_button
 from Humbird.button import render_humbird_workflow
+from rbt.rbt_button_ui import render_rbt_button_ui
 from usps_utils import run_usps_tracking_process
 import pandas as pd
 import streamlit as st
@@ -83,5 +84,7 @@ render_SDS_widgets()
 render_humbird_workflow()
 
 render_HS_scanner_ui()
+
+render_rbt_button_ui()
 
 
