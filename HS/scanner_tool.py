@@ -4,7 +4,7 @@ import requests
 
 
 def get_label_data(label_no):
-    auth_token = "fbed922a-ae25-4b05-ae34-62a3434c4bdc"
+    auth_token = "6d0f29ed-8ade-4e92-a3fd-883c7e5dea4d"
 
     """The background function that talks to the tshirt.riin.com API."""
     url = "https://tshirt.riin.com/manufacture/deliverGoodsLabel/scan/labelNo"
