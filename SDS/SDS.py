@@ -3,19 +3,16 @@ import pandas as pd
 import requests
 import time
 from SDS.factoryFetch import factory_fetch_records
+import config
 
-if "qa_token" not in st.session_state:
-    YD_QA_TOKEN = "sds-pod:244cfc4a-4e8b-4e40-8ded-28f696b849b5"
-    OTHER__QA_TOKEN = "sds-pod:38b7d608-33d6-485c-b3b0-3c5eb348e5e6"
-    st.session_state.qa_token = YD_QA_TOKEN
 
 from SDS.pre_scan import  run_parallel_scan_generator
 
+
 # Assign to a local variable for shorter typing if you like
-QA_TOKEN = st.session_state.qa_token
-# QA_token = "sds-pod:b07b0f28-8c71-4e7c-bee1-8fcf08137a07"
-# factory_order_id = get_factory_order_id(2006820000273575)
-# print(get_tracking_from_factory_id(factory_order_id))
+
+QA_TOKEN = config.YD_QA_TOKEN
+
 # --- API Logic ---
 def handle_batch_scan():
     """

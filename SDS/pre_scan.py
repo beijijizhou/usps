@@ -1,15 +1,12 @@
 import requests
 import time
 import streamlit as st
+import config
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def get_headers():
-    # print("Using QA Token:", st.session_state.qa_token)
-    return {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/json, text/plain, */*",
-        "access-token": "sds-pod:244cfc4a-4e8b-4e40-8ded-28f696b849b5"
-    }
+    
+    return config.SDS_HEADERS
 
 def process_single_order(order_no):
     """The full chain for one ID: Order No -> Factory ID -> Tracking No"""
