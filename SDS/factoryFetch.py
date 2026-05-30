@@ -15,8 +15,9 @@ def factory_fetch_records():
         "sort": "-id",
         **time_range
     }
-
-    factory_token = "sds-factory:5024fbff-fe8e-464a-8bee-e7223d84fc44"
+    YD_Factory_TOKEN = "sds-factory:2ea30cef-776c-48dc-b674-dc7c9434cef3"
+    other_factory_token = "sds-factory:5024fbff-fe8e-464a-8bee-e7223d84fc44"
+    factory_token = YD_Factory_TOKEN
 
     factory_headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

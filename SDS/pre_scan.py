@@ -4,10 +4,11 @@ import streamlit as st
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def get_headers():
+    # print("Using QA Token:", st.session_state.qa_token)
     return {
         "User-Agent": "Mozilla/5.0",
         "Accept": "application/json, text/plain, */*",
-        "access-token": "sds-pod:38b7d608-33d6-485c-b3b0-3c5eb348e5e6"
+        "access-token": "sds-pod:244cfc4a-4e8b-4e40-8ded-28f696b849b5"
     }
 
 def process_single_order(order_no):
@@ -18,9 +19,9 @@ def process_single_order(order_no):
         f_url = "https://pod-api.sdspod.com/pod/qc/factoryOrder"
         f_res = requests.get(f_url, params={"no": order_no, "t": int(time.time()*1000)}, 
                              headers=get_headers(), timeout=100)
-        print(get_headers())
+        # print("head",st.session_state.qa_token)
         factory_id = f_res.json().get("orderId") if f_res.status_code == 200 else None
-        print(f"Order {order_no} -> Factory ID: {factory_id}")
+        # print(f"Order {order_no} -> Factory ID: {factory_id}")
         if not factory_id:
             return {"Order ID": order_no, "status": "error", "msg": "Factory ID not found"}
 

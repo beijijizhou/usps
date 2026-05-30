@@ -42,8 +42,8 @@ edited_df = st.data_editor(
     num_rows="dynamic",  # Allows users to add/delete rows
     width='stretch',
     column_config={
-        "Order ID": st.column_config.TextColumn("Order ID", help="生产订单号"),
-        "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)", help="物流单号，必须填写"),
+        "Order ID": st.column_config.TextColumn("Order ID"),
+        "Tracking Number": st.column_config.TextColumn("Tracking Number (Required)"),
     }
 )
 # if edited_df is not None:

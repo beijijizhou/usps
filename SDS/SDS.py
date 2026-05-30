@@ -5,7 +5,9 @@ import time
 from SDS.factoryFetch import factory_fetch_records
 
 if "qa_token" not in st.session_state:
-    st.session_state.qa_token = "sds-pod:38b7d608-33d6-485c-b3b0-3c5eb348e5e6"
+    YD_QA_TOKEN = "sds-pod:244cfc4a-4e8b-4e40-8ded-28f696b849b5"
+    OTHER__QA_TOKEN = "sds-pod:38b7d608-33d6-485c-b3b0-3c5eb348e5e6"
+    st.session_state.qa_token = YD_QA_TOKEN
 
 from SDS.pre_scan import  run_parallel_scan_generator
 
@@ -100,7 +102,7 @@ def scanID(order_no):
 
 def render_SDS_widgets():
     st.divider()
-    st.markdown("### 🛠️ SDS 1号线 订单操作")
+    st.markdown("### 🛠️ SDS 忆点万象 订单操作")
 
     col1, col2 = st.columns(2)
 
