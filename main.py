@@ -39,7 +39,7 @@ c1, c2 = st.columns(2)
 
 edited_df = st.data_editor(
     st.session_state.df_input,
-    # num_rows="dynamic",  # Allows users to add/delete rows
+    num_rows="dynamic",  # Allows users to add/delete rows
     width='stretch',
     column_config={
         "Order ID": st.column_config.TextColumn("Order ID"),

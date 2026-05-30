@@ -26,7 +26,7 @@ def handle_batch_scan():
         return
 
     order_ids = input_df["Order ID"].dropna().str.strip().tolist()
-    order_ids = [idx for idx in order_ids if idx] 
+    order_ids = [idx for idx in order_ids if idx]
     # order_ids = order_ids[:4]
     if not order_ids:
         st.warning("No valid Order IDs to scan.")
@@ -123,8 +123,10 @@ def render_SDS_widgets():
                 st.warning("No data found in table.")
                 return
             # 2. Execution
+            start_time = time.time()
             raw_results = handle_batch_scan()
-
+            execution_time = time.time() - start_time
+            print(f"Batch scan completed in {execution_time:.2f} seconds.")
             # 3. Data Processing
             scan_log = []
             for res in raw_results:
