@@ -51,7 +51,7 @@ def handle_batch_scan():
             st.session_state.df_input.loc[
                 st.session_state.df_input["Order ID"] == order_id, "Tracking Number"
             ] = msg
-        
+            print(f"Updated Order {order_id} with Tracking: {msg}")
         scan_log.append({
             "Order ID": order_id,
             "Scan Status": "✅ Success" if success else "❌ Failed",

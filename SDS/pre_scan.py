@@ -18,14 +18,14 @@ def process_single_order(order_no):
                              headers=get_headers(), timeout=100)
         # print("head",st.session_state.qa_token)
         factory_id = f_res.json().get("orderId") if f_res.status_code == 200 else None
-        # print(f"Order {order_no} -> Factory ID: {factory_id}")
+        print(f"Order {order_no} -> Factory ID: {factory_id}")
         if not factory_id:
             return {"Order ID": order_no, "status": "error", "msg": "Factory ID not found"}
 
         # Step 2: Get Tracking
         t_url = f"https://pod-api.sdspod.com/pod/parcel/qc/{factory_id}/detail"
         t_res = requests.get(t_url, params={"t": int(time.time()*1000)}, 
-                             headers=get_headers(), timeout=100)
+                             headers=get_headers(), timeout=1000)
         
         if t_res.status_code == 200:
             details = t_res.json().get("detailList", [])
@@ -43,7 +43,7 @@ def process_single_order(order_no):
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def run_parallel_scan_generator(order_ids, max_workers=60):
+def run_parallel_scan_generator(order_ids, max_workers=10):
     """
     Engine: Executes API calls in parallel and yields results immediately.
     """

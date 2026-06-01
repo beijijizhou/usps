@@ -1,4 +1,4 @@
-YD_QA_TOKEN = "sds-pod:244cfc4a-4e8b-4e40-8ded-28f696b849b5"
+YD_QA_TOKEN = "sds-pod:0239bba2-fb40-4e40-a85e-8f18710f7843"
 YD_FACTORY_TOKEN = "sds-factory:2ea30cef-776c-48dc-b674-dc7c9434cef3"
 # You can also construct global headers here
 SDS_HEADERS = {

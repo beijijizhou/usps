@@ -35,8 +35,19 @@ st.caption(
 
 
 
-c1, c2 = st.columns(2)
 
+c1, c2, _ = st.columns([2, 2, 4])
+with c1:
+    sort_by = st.selectbox("Sort by:", ["None", "Order ID", "Tracking Number"])
+with c2:
+    # A button to apply the sorting manually
+    if st.button("🔄 Apply Sort", use_container_width=True):
+        if sort_by == "Order ID":
+            st.session_state.df_input = st.session_state.df_input.sort_values(by="Order ID").reset_index(drop=True)
+            st.rerun()
+        elif sort_by == "Tracking Number":
+            st.session_state.df_input = st.session_state.df_input.sort_values(by="Tracking Number").reset_index(drop=True)
+            st.rerun()
 edited_df = st.data_editor(
     st.session_state.df_input,
     num_rows="dynamic",  # Allows users to add/delete rows
@@ -48,7 +59,7 @@ edited_df = st.data_editor(
 )
 # if edited_df is not None:
 #     st.session_state.df_input = edited_df
-    
+c1, c2 = st.columns(2)
 count_orders, count_tracking = get_data_metrics(st.session_state.df_input)
 
 c1.metric("📦 Total Order IDs", count_orders)
