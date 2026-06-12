@@ -1,7 +1,7 @@
 import requests
 TOKENS = {
     "UV": "852457|c7MWRubJVYYQ9AoisDzRRZWuKr53k4O8ESbjnWbS",
-    "T-Shirt": "893195|w7BHEvhs37Za3HKH5JKEIzyiB1tlWSrtPS6d1AYn"
+    "T-Shirt": "2799|QlFEGq5olPNbOaWwuPSUOqByxLsG6InHAYmz6cRga8233796"
 }
 
 def push_delivery_print(order_code, token=None  ):
@@ -9,7 +9,11 @@ def push_delivery_print(order_code, token=None  ):
     """
     Sends a POST request to goodsDeliveryPrint with the order code payload.
     """
-    url = "https://factory.s2bdiy.com/req/factory/delivery/goodsDeliveryPrint"
+    url = (
+        "https://overseasfactory.s2bdiy.com/"
+        "req/factory/delivery/getPrintInfoWithShelves"
+    )
+    # https://overseasfactory.s2bdiy.com/req/factory/delivery/getPrintInfoWithShelves?code=7RCY27&is_new_print=1&order_shelve_id=194
     
     # Your Bearer Token
     # bearer_token = "852457|c7MWRubJVYYQ9AoisDzRRZWuKr53k4O8ESbjnWbS"
@@ -29,7 +33,7 @@ def push_delivery_print(order_code, token=None  ):
     try:
         print(f"Pushing Delivery Print for code: {order_code}...")
         # Use requests.post for endpoints requiring a payload
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response = requests.get(url, json=payload, headers=headers, timeout=10)
         
         if response.status_code == 200:
             data = response.json()

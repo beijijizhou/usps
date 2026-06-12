@@ -43,7 +43,7 @@ def process_single_order(order_no):
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def run_parallel_scan_generator(order_ids, max_workers=10):
+def run_parallel_scan_generator(order_ids, max_workers=60):
     """
     Engine: Executes API calls in parallel and yields results immediately.
     """
