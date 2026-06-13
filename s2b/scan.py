@@ -17,8 +17,7 @@ def push_delivery_print(order_code, token=None):
     """
 
     url = (
-        "https://overseasfactory.s2bdiy.com/"
-        "req/factory/delivery/getPrintInfoWithShelves"
+        "https://overseasfactory.s2bdiy.com/req/factory/delivery/goodsDeliveryPrint"
     )
 
     headers = {
@@ -28,15 +27,13 @@ def push_delivery_print(order_code, token=None):
     }
 
     params = {
-        "code": order_code,
-        "is_new_print": 1,
-        "order_shelve_id": SHELF_IDS.get(token)
+        "code": order_code
     }
 
     try:
         print(f"Getting print info for code: {order_code}...")
 
-        response = requests.get(
+        response = requests.post(
             url,
             params=params,
             headers=headers,
