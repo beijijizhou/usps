@@ -85,14 +85,24 @@ def get_label_data(label_no):
 
 def render_HS_scanner_ui():
     """This is the function you call in your main app to display the scanner."""
-    st.subheader("📦 汉森自动扫面单")
-
+    st.subheader("📦 汉森自动出面单")
+    with st.expander("📖 使用说明 / How to Use", expanded=False):
+        st.markdown("""
+        1. 在文本框中输入或粘贴要扫描的LB单号，多个面单请用逗号、空格或换行分隔。
+        2. 点击“出面单”按钮开始扫描。
+        3. 扫描结果将显示在每个面单对应的展开区域中。
+        
+        --- English Instructions ---
+        1. Enter or paste the label numbers in the text area. Separate multiple labels with commas, spaces, or new lines.
+        2. Click the "出面单" button to start scanning.
+        3. The results will be displayed in expandable sections for each label.
+        """)
     print(f"Factory Auth Token: {auth_token}")
     # Changed to text_area to support the long list of labels
     label_input = st.text_area(
-        "Label Numbers", placeholder="Paste labels separated by commas or new lines...", key="scan_lbl_input", height=200)
+        "Label Numbers", placeholder="在文本框中输入或粘贴要扫描的LB单号，多个单号请用逗号、空格或换行分隔。", key="scan_lbl_input", height=200)
 
-    if st.button("Execute Scan", width='stretch'):
+    if st.button("出面单", width='stretch'):
         if not label_input:
             st.warning("Please enter labels.")
             return
