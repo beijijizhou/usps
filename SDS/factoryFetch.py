@@ -1,23 +1,26 @@
+
 import requests
 
 from SDS.time import get_dynamic_time_range
+import config
 PENDING = 1
 ACCPEPTED = 2
 
 def factory_fetch_records():
     url = "https://factory-api.sdspod.com/factory_orders/v2/order/allByEs"
-    time_range = get_dynamic_time_range(days_before=0, days_after=1)
+    time_range = get_dynamic_time_range(days_before=2, days_after=1)
     params = {
         "size": 500,
         "page": 1,
-        "status": PENDING,  # Only fetch orders with status=1 (Pending)
+        "status": ACCPEPTED,  # Only fetch orders with status=1 (Pending)
         "noManuscriptFeedbackStatus": 1,
         "sort": "-id",
         **time_range
     }
-    YD_Factory_TOKEN = "sds-factory:2ea30cef-776c-48dc-b674-dc7c9434cef3"
-    other_factory_token = "sds-factory:5024fbff-fe8e-464a-8bee-e7223d84fc44"
-    factory_token = YD_Factory_TOKEN
+    # YD_Factory_TOKEN = "sds-factory:2ea30cef-776c-48dc-b674-dc7c9434cef3"
+    
+   
+    factory_token = config.SDS_FACTORY_TOKEN
 
     factory_headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

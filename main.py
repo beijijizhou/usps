@@ -94,7 +94,7 @@ render_SDS_widgets()
 # render_sds3_widgets()
 render_humbird_workflow()
 
-render_HS_scanner_ui()
+
 
 render_rbt_button_ui()
 
