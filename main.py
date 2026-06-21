@@ -88,7 +88,7 @@ if st.button("Start Tracking", type="primary"):
 
 
 render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
-render_SDS_widgets()
+
 # render_SDS_3_fetch_button()
 
 # render_sds3_widgets()

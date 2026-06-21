@@ -3,7 +3,7 @@ import streamlit as st
 import requests
 import time
 
-QA_token = st.session_state.get("qa_token")
+QA_token = "sds-pod:3b143ac2-32d7-4bb4-875c-0f8bf94d24d4"
 
 factory_headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
