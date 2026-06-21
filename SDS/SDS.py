@@ -70,7 +70,7 @@ def handle_batch_scan(order_ids):
 # --- Streamlit UI ---
 def render_SDS_widgets():
     st.divider()
-    st.markdown("### 🛠️ SDS 忆点万象 订单操作")
+    st.markdown("### 🛠️ SDS 3D 热转印 订单操作")
 
     # Initialize a temporary holding state key *only* to bridge the two button clicks
     if "fetched_ids_list" not in st.session_state:
