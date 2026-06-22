@@ -3,9 +3,10 @@ import pandas as pd
 import requests
 import time
 from SDS.QA_scan import scanID
+from SDS.auth_api import login_to_qa
 from SDS.factoryFetch import factory_fetch_records
 import config
-
+from SDS.platform_selector import render_platform_dropdown
 from SDS.pre_scan import run_parallel_scan_generator
 
 # Assign to a local variable for shorter typing if you like
@@ -70,14 +71,14 @@ def handle_batch_scan(order_ids):
 # --- Streamlit UI ---
 def render_SDS_widgets():
     st.divider()
-    st.markdown("### 🛠️ SDS 3D 热转印 订单操作")
-
+    print(login_to_qa())
+    # st.markdown("### 🛠️ SDS 3D 热转印 订单操作")
+    render_platform_dropdown()  # Platform selector at the top of the section
     # Initialize a temporary holding state key *only* to bridge the two button clicks
     if "fetched_ids_list" not in st.session_state:
         st.session_state.fetched_ids_list = []
 
     col1, col2 = st.columns(2)
-
     with col1:
         if st.button("🔍 获取生产中订单", use_container_width=True):
             with st.spinner("Fetching from SDS..."):

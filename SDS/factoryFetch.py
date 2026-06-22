@@ -1,6 +1,7 @@
 
 import requests
 
+from SDS.auth_api import login_to_SDS_factory
 from SDS.time import get_dynamic_time_range
 import config
 PENDING = 1
@@ -20,7 +21,7 @@ def factory_fetch_records():
     # YD_Factory_TOKEN = "sds-factory:2ea30cef-776c-48dc-b674-dc7c9434cef3"
     
    
-    factory_token = config.SDS_FACTORY_TOKEN
+    factory_token = login_to_SDS_factory()
 
     factory_headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
