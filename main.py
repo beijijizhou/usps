@@ -8,6 +8,7 @@ import streamlit as st
 from s2b.scanButton import render_scan_buttons
 import os
 import sys
+from usps_batch_ui import render_usps_batch_tables
 
 from utility import get_data_metrics
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -63,7 +64,21 @@ count_orders, count_tracking = get_data_metrics(st.session_state.df_input)
 c1.metric("📦 Total Order IDs", count_orders)
 c2.metric("🚚 Total Tracking Numbers", count_tracking)
 # 2. Process Button
-if st.button("Start Tracking", type="primary"):
+lookup_col, api_col = st.columns(2)
+with lookup_col:
+    build_batches = st.button("Build USPS Website Batches", type="primary", use_container_width=True)
+with api_col:
+    start_api_tracking = st.button("Start Paid USPS API Tracking", use_container_width=True)
+
+if build_batches:
+    df_clean = edited_df.fillna("").astype(str)
+    valid_data = df_clean[df_clean["Tracking Number"].str.strip() != ""]
+    if valid_data.empty:
+        st.warning("Please enter at least one Tracking Number in the table.")
+    else:
+        st.session_state.usps_website_source_df = valid_data
+
+if start_api_tracking:
     # Filter out any rows where the tracking number is empty
     df_clean = edited_df.fillna("").astype(str)
     valid_data = df_clean[df_clean["Tracking Number"].str.strip() != ""]
@@ -84,6 +99,14 @@ if st.button("Start Tracking", type="primary"):
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
 
+if "usps_website_source_df" in st.session_state:
+    st.subheader("Step 2: USPS website batches")
+    render_usps_batch_tables(
+        st.session_state.usps_website_source_df,
+        key_prefix="main_pasted_table",
+        expanded=True
+    )
+
 
 render_scan_buttons(order_ids=edited_df["Order ID"].tolist())
 
@@ -95,5 +118,3 @@ render_humbird_workflow()
 
 
 render_rbt_button_ui()
-
-

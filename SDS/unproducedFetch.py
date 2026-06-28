@@ -1,17 +1,20 @@
 from SDS.factoryFetch import PENDING, fetch_factory_order_ids
-from SDS.pre_scan import run_parallel_scan_generator
+from SDS.pre_scan import DEFAULT_MAX_WORKERS, run_parallel_scan_generator
 
 
 def fetch_unproduced_order_ids():
     return fetch_factory_order_ids(PENDING)
 
 
-def fetch_unproduced_orders_with_tracking():
+def fetch_unproduced_orders_with_tracking(max_workers=DEFAULT_MAX_WORKERS, on_progress=None):
     order_ids = fetch_unproduced_order_ids()
     rows = []
+    total = len(order_ids)
 
-    for res in run_parallel_scan_generator(order_ids):
+    for index, res in enumerate(run_parallel_scan_generator(order_ids, max_workers=max_workers), start=1):
         rows.append(format_tracking_preview_row(res))
+        if on_progress:
+            on_progress(index, total, res)
 
     return order_ids, rows
 

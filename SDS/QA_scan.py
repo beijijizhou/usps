@@ -5,7 +5,7 @@ from SDS.headers import get_qa_headers
 def get_headers():
     return get_qa_headers()
 
-def scanID(order_no):
+def scanID(order_no, headers=None):
     """
     Tests the QC API for a specific order number.
     """
@@ -20,7 +20,7 @@ def scanID(order_no):
 
     try:
         print(f"\nScanning Order: {order_no}...")
-        r = requests.get(url, params=params, headers=get_headers(), timeout=10)
+        r = requests.get(url, params=params, headers=headers or get_headers(), timeout=10)
         
         if r.status_code == 200:
             qc_data = r.json()
