@@ -34,7 +34,6 @@ def login_to_SDS_factory():
         response = requests.post(url, json=payload, headers=headers, timeout=100)
         if response.status_code == 200:
             data = response.json()
-            print("Factory Login Response:", data)  # Debug print to inspect the response structure
             token = data.get("data", {}).get("access_token") or data.get("data", {}).get("token")            
             if token:
                 return token
@@ -54,7 +53,6 @@ def login_to_qa():
     Authenticates with the QA API environment using g-pod-api.
     """
     current_platform = st.session_state.get("selected_platform", "3D热转印")
-    
     try:
         creds = st.secrets["qa_credentials"][current_platform]
     except KeyError:

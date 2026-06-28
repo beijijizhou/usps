@@ -2,12 +2,14 @@ import requests
 
 TOKENS = {
     "UV": "2801|0C8LB7C4A7w3jX32PQzyypkG5pO7OovbkcEE8dIid626fe65",
-    "T-Shirt": "2799|QlFEGq5olPNbOaWwuPSUOqByxLsG6InHAYmz6cRga8233796"
+    "T-Shirt": "2799|QlFEGq5olPNbOaWwuPSUOqByxLsG6InHAYmz6cRga8233796",
+    "3D":"6704|uu4Q6AiOPEOEEPnipX2K1Oityy2ua32hLNbLf8j5b82b0b63"
 }
 
 SHELF_IDS = {
     TOKENS["UV"]: 206,
     TOKENS["T-Shirt"]: 194,
+    TOKENS["3D"]:267
 }
 
 
@@ -52,6 +54,3 @@ def push_delivery_print(order_code, token=None):
         print(f"Failed to get print info for {order_code}: {e}")
         return None
 
-
-if __name__ == "__main__":
-    push_delivery_print("TYLX97", TOKENS["UV"])

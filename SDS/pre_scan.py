@@ -1,22 +1,19 @@
 import requests
 import time
-import streamlit as st
-import config
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from SDS.headers import get_qa_headers
 
 def get_headers():
-    
-    return config.SDS_HEADERS
+    return get_qa_headers()
 
-def process_single_order(order_no):
+def process_single_order(order_no, headers):
     """The full chain for one ID: Order No -> Factory ID -> Tracking No"""
     order_no = str(order_no).strip()
     try:
         # Step 1: Get Factory ID
         f_url = "https://pod-api.sdspod.com/pod/qc/factoryOrder"
         f_res = requests.get(f_url, params={"no": order_no, "t": int(time.time()*1000)}, 
-                             headers=get_headers(), timeout=100)
-        # print("head",st.session_state.qa_token)
+                             headers=headers, timeout=100)
         factory_id = f_res.json().get("orderId") if f_res.status_code == 200 else None
         print(f"Order {order_no} -> Factory ID: {factory_id}")
         if not factory_id:
@@ -25,7 +22,7 @@ def process_single_order(order_no):
         # Step 2: Get Tracking
         t_url = f"https://pod-api.sdspod.com/pod/parcel/qc/{factory_id}/detail"
         t_res = requests.get(t_url, params={"t": int(time.time()*1000)}, 
-                             headers=get_headers(), timeout=1000)
+                             headers=headers, timeout=1000)
         
         if t_res.status_code == 200:
             details = t_res.json().get("detailList", [])
@@ -41,16 +38,15 @@ def process_single_order(order_no):
     except Exception as e:
         return {"Order ID": order_no, "status": "error", "msg": str(e)}
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 def run_parallel_scan_generator(order_ids, max_workers=60):
     """
     Engine: Executes API calls in parallel and yields results immediately.
     """
+    headers = get_headers()
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Map each order_id to a thread task
         future_to_order = {
-            executor.submit(process_single_order, str(no).strip()): no 
+            executor.submit(process_single_order, str(no).strip(), headers): no 
             for no in order_ids
         }
         

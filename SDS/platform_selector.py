@@ -14,14 +14,16 @@ def render_platform_dropdown():
         "忆点万象",
         "3D热转印"
     ]
+
+    if "selected_platform" not in st.session_state:
+        st.session_state.selected_platform = "3D热转印"
     
     # Store choice in session state if you need persistence across tabs, 
     # otherwise a local return is perfectly clean.
     selected_platform = st.selectbox(
         "切换生产线 / 平台 :",
         options=platforms,
-        index=3,  # Defaults to "3D热转印" as the index 3 item
-        key="selected_platform_channel"
+        key="selected_platform"
     )
     
     return selected_platform

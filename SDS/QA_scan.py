@@ -1,15 +1,10 @@
-import streamlit as st
-
 import requests
 import time
+from SDS.headers import get_qa_headers
 
-QA_token = "sds-pod:3b143ac2-32d7-4bb4-875c-0f8bf94d24d4"
+def get_headers():
+    return get_qa_headers()
 
-factory_headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "access-token":QA_token,
-}
 def scanID(order_no):
     """
     Tests the QC API for a specific order number.
@@ -25,7 +20,7 @@ def scanID(order_no):
 
     try:
         print(f"\nScanning Order: {order_no}...")
-        r = requests.get(url, params=params, headers=factory_headers, timeout=10)
+        r = requests.get(url, params=params, headers=get_headers(), timeout=10)
         
         if r.status_code == 200:
             qc_data = r.json()
@@ -55,4 +50,3 @@ def run_batch_scan(ids):
             print(f"[{i}/{len(ids)}] Failed to scan {order_no}")
             
     return scan_results
-
