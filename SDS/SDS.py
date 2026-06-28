@@ -12,6 +12,15 @@ from usps_batch_ui import render_usps_batch_tables
 
 DEFAULT_QUEUE_TITLE = "待扫描队列"
 SDS_TABLE_HEIGHT = 720
+DISPLAY_COLUMN_LABELS = {
+    "Order ID": "订单号",
+    "Tracking Number": "追踪号",
+    "Carrier": "渠道",
+    "Status": "状态",
+    "Label Scan": "出面单",
+    "Scan Status": "扫描状态",
+    "Result": "结果",
+}
 
 
 def init_sds_state():
@@ -37,12 +46,12 @@ def handle_batch_scan(order_ids, max_workers=DEFAULT_MAX_WORKERS):
     Takes a local list of order_ids passed directly from the UI trigger.
     """
     if not order_ids:
-        st.warning("No valid Order IDs to scan.")
+        st.warning("没有可处理的订单号。")
         return
 
     clean_order_ids = [str(order_id).strip() for order_id in order_ids if str(order_id).strip()]
     if not clean_order_ids:
-        st.warning("No valid Order IDs to scan.")
+        st.warning("没有可处理的订单号。")
         return
 
     # 1. Setup UI Elements
@@ -72,7 +81,7 @@ def handle_batch_scan(order_ids, max_workers=DEFAULT_MAX_WORKERS):
         percent_complete = queried / total
         progress_bar.progress(percent_complete)
         status_text.text(
-            f"Queried {queried}/{total} | Left {remaining} | Current: {res.get('Order ID')}"
+            f"已查询 {queried}/{total} | 剩余 {remaining} | 当前订单：{res.get('Order ID')}"
         )
 
     label_scan_executor.shutdown(wait=True)
@@ -81,7 +90,7 @@ def handle_batch_scan(order_ids, max_workers=DEFAULT_MAX_WORKERS):
     duration = time.time() - start_time
     scan_results_df = pd.DataFrame(scan_log)
     st.session_state.scan_results_summary = scan_results_df
-    status_text.success(f"Batch scan complete! {total} orders in {duration:.2f}s")
+    status_text.success(f"批量出面单完成！共 {total} 个订单，用时 {duration:.2f} 秒")
     
     st.rerun()
 
@@ -90,12 +99,12 @@ def render_SDS_widgets():
     st.divider()
    
     # st.markdown("### 🛠️ SDS 3D 热转印 订单操作")
-    render_platform_dropdown()  # Platform selector at the top of the section
+    selected_platform = render_platform_dropdown()  # Platform selector at the top of the section
     init_sds_state()
     max_workers = st.slider(
-        "Tracking query concurrency",
+        "追踪号查询并发数",
         min_value=10,
-        max_value=150,
+        max_value=1500,
         value=DEFAULT_MAX_WORKERS,
         step=10
     )
@@ -103,7 +112,7 @@ def render_SDS_widgets():
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("📦 获取未排产订单", use_container_width=True):
-            with st.spinner("Fetching unproduced orders from SDS..."):
+            with st.spinner(f"正在从 {selected_platform} 获取未排产订单..."):
                 progress_bar = st.progress(0)
                 status_text = st.empty()
 
@@ -111,7 +120,7 @@ def render_SDS_widgets():
                     remaining = total - queried
                     progress_bar.progress(queried / total if total else 0)
                     status_text.text(
-                        f"Queried {queried}/{total} | Left {remaining} | Current: {result.get('Order ID')}"
+                        f"已查询 {queried}/{total} | 剩余 {remaining} | 当前订单：{result.get('Order ID')}"
                     )
 
                 local_fetched_ids, display_rows = fetch_unproduced_orders_with_tracking(
@@ -123,22 +132,22 @@ def render_SDS_widgets():
 
                 if local_fetched_ids:
                     set_order_queue(local_fetched_ids, "未排产订单", display_rows)
-                    st.success(f"Successfully loaded {len(local_fetched_ids)} unproduced orders.")
+                    st.success(f"已从 {selected_platform} 成功加载 {len(local_fetched_ids)} 个未排产订单。")
                 else:
                     set_order_queue([], "未排产订单")
-                    st.warning("No unproduced orders found.")
+                    st.warning("没有找到未排产订单。")
 
     with col2:
         if st.button("🔍 获取生产中订单", use_container_width=True):
-            with st.spinner("Fetching from SDS..."):
+            with st.spinner(f"正在从 {selected_platform} 获取订单..."):
                 local_fetched_ids = factory_fetch_records()
                 
                 if local_fetched_ids:
                     set_order_queue(local_fetched_ids, "生产中订单")
-                    st.success(f"Successfully loaded {len(local_fetched_ids)} orders.")
+                    st.success(f"已从 {selected_platform} 成功加载 {len(local_fetched_ids)} 个订单。")
                 else:
                     set_order_queue([], "生产中订单")
-                    st.warning("No orders found.")
+                    st.warning("没有找到订单。")
 
     with col3:
         current_orders = st.session_state.fetched_ids_list
@@ -167,7 +176,7 @@ def render_SDS_widgets():
     if "scan_results_summary" in st.session_state:
         with st.expander("📄 查看最近一次扫描详情", expanded=True):
             st.dataframe(
-                sort_usps_first(st.session_state.scan_results_summary),
+                localize_dataframe(sort_usps_first(st.session_state.scan_results_summary)),
                 use_container_width=True,
                 height=SDS_TABLE_HEIGHT
             )
@@ -186,11 +195,15 @@ def render_order_queue():
     })
     display_df = sort_usps_first(display_df)
     st.dataframe(
-        display_df,
+        localize_dataframe(display_df),
         use_container_width=True,
         hide_index=True,
         height=SDS_TABLE_HEIGHT
     )
+
+
+def localize_dataframe(df):
+    return df.rename(columns={key: value for key, value in DISPLAY_COLUMN_LABELS.items() if key in df.columns})
 
 
 def sort_usps_first(df):

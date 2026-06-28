@@ -15,14 +15,16 @@ def render_usps_batch_tables(df, key_prefix, expanded=True, table_height=720):
 
     with st.expander("📮 USPS 35个一组批量查询链接", expanded=expanded):
         if batches_df.empty:
-            st.info("No USPS tracking numbers found for batching.")
+            st.info("没有找到可用于批量查询的 USPS 追踪号。")
         else:
             st.dataframe(
                 batches_df,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "USPS Batch Link": st.column_config.LinkColumn("USPS Batch Link", display_text="Open Batch")
+                    "Batch": st.column_config.NumberColumn("批次"),
+                    "Count": st.column_config.NumberColumn("数量"),
+                    "USPS Batch Link": st.column_config.LinkColumn("USPS批量查询链接", display_text="打开批次")
                 }
             )
 
@@ -35,12 +37,12 @@ def render_usps_batch_tables(df, key_prefix, expanded=True, table_height=720):
                 height=table_height,
                 key=f"{key_prefix}_usps_mapping",
                 column_config={
-                    "Batch": st.column_config.NumberColumn("Batch"),
-                    "Position in Batch": st.column_config.NumberColumn("Position"),
-                    "Order ID": st.column_config.TextColumn("Order ID"),
-                    "Tracking Number": st.column_config.TextColumn("Tracking Number"),
-                    "Website Status": st.column_config.TextColumn("Website Status"),
-                    "Notes": st.column_config.TextColumn("Notes")
+                    "Batch": st.column_config.NumberColumn("批次"),
+                    "Position in Batch": st.column_config.NumberColumn("批次内序号"),
+                    "Order ID": st.column_config.TextColumn("订单号"),
+                    "Tracking Number": st.column_config.TextColumn("追踪号"),
+                    "Website Status": st.column_config.TextColumn("官网状态"),
+                    "Notes": st.column_config.TextColumn("备注")
                 },
                 disabled=["Batch", "Position in Batch", "Order ID", "Tracking Number"]
             )

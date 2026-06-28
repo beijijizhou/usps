@@ -25,5 +25,5 @@ def format_tracking_preview_row(scan_result):
         "Order ID": scan_result.get("Order ID", ""),
         "Tracking Number": tracking_number,
         "Carrier": scan_result.get("carrier", ""),
-        "Status": "Found" if tracking_number else scan_result.get("msg", "")
+        "Status": "已找到" if tracking_number else scan_result.get("msg", "")
     }

@@ -3,7 +3,8 @@ from s2b.scan import push_delivery_print, TOKENS
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def render_scan_buttons(order_ids=None):
+
+def render_S2B_scan_buttons(order_ids=None):
     # Created 3 columns to fit the new button
     col1, col2, col3 = st.columns(3)
 
@@ -19,7 +20,6 @@ def render_scan_buttons(order_ids=None):
         if st.button("S2B 3D Scan", width='stretch'):
             # Assumes TOKENS["3D"] exists; adjust the key if your dictionary uses a different name
             run_batch_process(order_ids, "3D Scan", TOKENS["3D"])
-
 
 
 def process_single_order(order_id, token, label):
@@ -44,29 +44,29 @@ def run_batch_process(order_ids, label, token, max_workers=5):
 
     ids_to_scan = [order_ids] if isinstance(order_ids, str) else order_ids
     total_orders = len(ids_to_scan)
-    
+
     progress_bar = st.progress(0)
-    status_text = st.empty() # Placeholder to show current progress count
+    status_text = st.empty()  # Placeholder to show current progress count
 
     # Use ThreadPoolExecutor for parallel execution
     # adjust max_workers based on your API's rate limits
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all tasks to the thread pool
         futures = {
-            executor.submit(process_single_order, order_id, token, label): order_id 
+            executor.submit(process_single_order, order_id, token, label): order_id
             for order_id in ids_to_scan
         }
-        
+
         # Process results as they complete on the main thread
         for i, future in enumerate(as_completed(futures)):
             order_id, success, error_msg = future.result()
-            
+
             # UI Updates are safe here because we are back on the main thread
             if success:
                 st.toast(f"✅ {order_id} ({label}) pushed", icon="🚀")
             else:
                 st.error(f"❌ {order_id} failed: {error_msg}")
-                
+
             # Update progress bar and text dynamically
             completion_percentage = (i + 1) / total_orders
             progress_bar.progress(completion_percentage)

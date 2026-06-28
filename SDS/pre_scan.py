@@ -23,7 +23,7 @@ def process_single_order(order_no, headers):
         factory_id = f_res.json().get("orderId") if f_res.status_code == 200 else None
         print(f"Order {order_no} -> Factory ID: {factory_id}")
         if not factory_id:
-            return {"Order ID": order_no, "status": "error", "msg": "Factory ID not found"}
+            return {"Order ID": order_no, "status": "error", "msg": "未找到工厂订单ID"}
 
         # Step 2: Get Tracking
         t_url = f"https://pod-api.sdspod.com/pod/parcel/qc/{factory_id}/detail"
@@ -33,7 +33,7 @@ def process_single_order(order_no, headers):
         if t_res.status_code == 200:
             details = t_res.json().get("detailList", [])
             if not details:
-                return {"Order ID": order_no, "status": "error", "msg": "No parcel details"}
+                return {"Order ID": order_no, "status": "error", "msg": "没有包裹详情"}
 
             parcel = details[0]
             return {
@@ -43,7 +43,7 @@ def process_single_order(order_no, headers):
                     "carrier": parcel.get("carriageName", "").upper() # e.g., "USPS"
                 }
         
-        return {"Order ID": order_no, "status": "error", "msg": "No parcel details"}
+        return {"Order ID": order_no, "status": "error", "msg": "没有包裹详情"}
     except Exception as e:
         return {"Order ID": order_no, "status": "error", "msg": str(e)}
 

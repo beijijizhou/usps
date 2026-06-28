@@ -59,9 +59,9 @@ def run_usps_tracking_process(df, progress_bar=None, status_text=None):
         
         # Update UI Elements
         if progress_bar:
-            progress_bar.progress(percent_val, text=f"Progress: {int(percent_val * 100)}%")
+            progress_bar.progress(percent_val, text=f"进度：{int(percent_val * 100)}%")
         if status_text:
-            status_text.info(f"Processing batch {i} of {total_items}...")
+            status_text.info(f"正在处理第 {i // batch_size + 1} 批，共 {total_items} 个物流单号...")
 
         # Execute API Request
         batch = tracking_list[i : i + batch_size]
@@ -95,8 +95,8 @@ def run_usps_tracking_process(df, progress_bar=None, status_text=None):
 
     # 4. Finalize UI
     if progress_bar:
-        progress_bar.progress(1.0, text="Progress: 100%")
+        progress_bar.progress(1.0, text="进度：100%")
     if status_text:
-        status_text.success(f"Tracked {total_items} items successfully.")
+        status_text.success(f"已成功查询 {total_items} 个物流单号。")
 
     return results

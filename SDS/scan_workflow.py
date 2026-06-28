@@ -6,20 +6,20 @@ def build_scan_log_row(scan_result, label_scan_result=None):
     carrier_name = scan_result.get("carrier", "")
 
     if success and "USPS" in carrier_name:
-        scan_status = "✅ Success (USPS)"
+        scan_status = "✅ 成功（USPS）"
         result = msg
     elif success:
-        scan_status = "⚠️ Skipped"
-        result = f"Non-USPS carrier: {carrier_name}"
+        scan_status = "⚠️ 已跳过"
+        result = f"非 USPS 渠道：{carrier_name}"
     else:
-        scan_status = "❌ Failed"
+        scan_status = "❌ 失败"
         result = msg
 
     return {
         "Order ID": order_id,
         "Tracking Number": tracking_number,
         "Carrier": carrier_name,
-        "Label Scan": "✅ Scanned" if label_scan_result else "❌ Scan Failed",
+        "Label Scan": "✅ 已出面单" if label_scan_result else "❌ 出面单失败",
         "Scan Status": scan_status,
         "Result": result
     }
