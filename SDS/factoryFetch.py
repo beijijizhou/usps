@@ -13,7 +13,7 @@ def fetch_factory_order_ids(status):
     url = "https://factory-api.sdspod.com/factory_orders/v2/order/allByEs"
     time_range = get_dynamic_time_range(days_before=2, days_after=1)
     params = {
-        "size": 500,
+        "size": 10000,
         "page": 1,
         "status": status,
         "noManuscriptFeedbackStatus": 1,
