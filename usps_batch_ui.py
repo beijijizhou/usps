@@ -15,7 +15,7 @@ def render_usps_batch_tables(df, key_prefix, expanded=True, table_height=720):
 
     with st.expander("📮 USPS 35个一组批量查询链接", expanded=expanded):
         if batches_df.empty:
-            st.info("没有找到可用于批量查询的 USPS 追踪号。")
+            st.info("没有找到可用于批量查询的 USPS 物流单号。")
         else:
             st.dataframe(
                 batches_df,
@@ -29,7 +29,7 @@ def render_usps_batch_tables(df, key_prefix, expanded=True, table_height=720):
             )
 
     if not mapping_df.empty:
-        with st.expander("🧾 USPS订单与追踪号对应表", expanded=expanded):
+        with st.expander("🧾 USPS订单与物流单号对应表", expanded=expanded):
             st.data_editor(
                 mapping_df.sort_values(by=["Tracking Number"]),
                 use_container_width=True,
@@ -40,11 +40,12 @@ def render_usps_batch_tables(df, key_prefix, expanded=True, table_height=720):
                     "Batch": st.column_config.NumberColumn("批次"),
                     "Position in Batch": st.column_config.NumberColumn("批次内序号"),
                     "Order ID": st.column_config.TextColumn("订单号"),
-                    "Tracking Number": st.column_config.TextColumn("追踪号"),
+                    "Tracking Number": st.column_config.TextColumn("物流单号"),
                     "Website Status": st.column_config.TextColumn("官网状态"),
                     "Notes": st.column_config.TextColumn("备注")
                 },
-                disabled=["Batch", "Position in Batch", "Order ID", "Tracking Number"]
+                disabled=["Batch", "Position in Batch",
+                          "Order ID", "Tracking Number"]
             )
 
     return batches_df, mapping_df

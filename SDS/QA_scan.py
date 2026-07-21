@@ -2,37 +2,99 @@ import requests
 import time
 from SDS.headers import get_qa_headers
 
+LABEL_SCAN_URL = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast"
+SUCCESS_CODES = {0, 200, "0", "200", "SUCCESS", "success", True}
+
+
 def get_headers():
     return get_qa_headers()
 
+
+def parse_label_scan_response(order_no, response):
+    try:
+        body = response.json()
+    except ValueError:
+        body = response.text
+
+    result = {
+        "ok": False,
+        "order_no": order_no,
+        "http_status": response.status_code,
+        "api_code": "",
+        "message": "",
+        "raw": body,
+    }
+
+    if response.status_code != 200:
+        result["message"] = str(body)
+        return result
+
+    if not isinstance(body, dict):
+        result["ok"] = True
+        result["message"] = str(body)
+        return result
+
+    api_code = body.get("code", body.get("status", body.get("success", "")))
+    message = body.get("msg", body.get("message", body.get("errorMsg", body.get("error", ""))))
+    result["api_code"] = api_code
+    result["message"] = str(message or body)
+
+    if body.get("errorMsg"):
+        result["ok"] = False
+    elif body.get("shipmentInfo") or body.get("printCarriagePdf") == 1:
+        result["ok"] = True
+        shipment_info = body.get("shipmentInfo") or {}
+        tracking_number = shipment_info.get("carriageNo", "")
+        pdf_url = shipment_info.get("pdfUrl") or shipment_info.get("laberPdf", "")
+        result["message"] = f"出面单成功 {tracking_number}".strip()
+        result["tracking"] = tracking_number
+        result["pdf_url"] = pdf_url
+    elif api_code == "":
+        result["ok"] = False
+    else:
+        result["ok"] = api_code in SUCCESS_CODES
+
+    return result
+
+
 def scanID(order_no, headers=None):
     """
-    Tests the QC API for a specific order number.
+    Calls the SDS QC fast-scan API to create/scan the shipping label.
     """
-    url = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast?"   
-    # Generate the 't' timestamp in milliseconds
     timestamp_ms = int(time.time() * 1000)
-    
     params = {
         "no": order_no,
         "t": timestamp_ms
     }
+    request_headers = headers or get_headers()
+
+    if not request_headers.get("access-token"):
+        return {
+            "ok": False,
+            "order_no": order_no,
+            "http_status": "",
+            "api_code": "",
+            "message": "QA token 为空，请检查当前平台的 QA 登录配置。",
+            "raw": "",
+        }
 
     try:
         print(f"\nScanning Order: {order_no}...")
-        r = requests.get(url, params=params, headers=headers or get_headers(), timeout=10)
-        
-        if r.status_code == 200:
-            qc_data = r.json()
-            print(f"QC Data Received: {qc_data}")
-            return qc_data
-        else:
-            print(f"QC API Error {r.status_code}: {r.text}")
-            return None
+        response = requests.get(LABEL_SCAN_URL, params=params, headers=request_headers, timeout=10)
+        result = parse_label_scan_response(order_no, response)
+        print(f"QC Scan Result: {result}")
+        return result
             
     except Exception as e:
         print(f"Scan failed: {e}")
-        return None
+        return {
+            "ok": False,
+            "order_no": order_no,
+            "http_status": "",
+            "api_code": "",
+            "message": str(e),
+            "raw": "",
+        }
 
 
 def run_batch_scan(ids):
@@ -43,7 +105,7 @@ def run_batch_scan(ids):
         # Call your existing scanID function
         result = scanID(order_no)
         
-        if result:
+        if result and result.get("ok"):
             scan_results.append({"order_no": order_no, "data": result})
             print(f"[{i}/{len(ids)}] Successfully scanned {order_no}")
         else:

@@ -21,7 +21,6 @@ def process_single_order(order_no, headers):
         f_res = requests.get(f_url, params={"no": order_no, "t": int(time.time()*1000)}, 
                              headers=headers, timeout=FACTORY_ORDER_TIMEOUT)
         factory_id = f_res.json().get("orderId") if f_res.status_code == 200 else None
-        print(f"Order {order_no} -> Factory ID: {factory_id}")
         if not factory_id:
             return {"Order ID": order_no, "status": "error", "msg": "未找到工厂订单ID"}
 
