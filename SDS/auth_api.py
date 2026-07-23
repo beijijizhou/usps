@@ -1,17 +1,16 @@
 import streamlit as st
 import requests
 import time
+from SDS.credentials import get_platform_credentials, get_selected_platform
 
 def login_to_SDS_factory():
     """
     Authenticates with the Factory Production API environment.
     """
-    current_platform = st.session_state.get("selected_platform", "3D热转印")
-    
-    try:
-        creds = st.secrets["factory_credentials"][current_platform]
-    except KeyError:
-        st.error(f"❌ Configuration error: Factory credentials missing for platform '{current_platform}'")
+    current_platform = get_selected_platform()
+    creds, error_message = get_platform_credentials("factory_credentials", current_platform)
+    if error_message:
+        st.error(f"❌ 工厂账号配置错误：{error_message}")
         return None
 
     url = "https://factory-api.sdspod.com/login"
@@ -52,11 +51,10 @@ def login_to_qa():
     """
     Authenticates with the QA API environment using g-pod-api.
     """
-    current_platform = st.session_state.get("selected_platform", "3D热转印")
-    try:
-        creds = st.secrets["qa_credentials"][current_platform]
-    except KeyError:
-        st.error(f"❌ Configuration error: QA credentials missing for platform '{current_platform}'")
+    current_platform = get_selected_platform()
+    creds, error_message = get_platform_credentials("qa_credentials", current_platform)
+    if error_message:
+        st.error(f"❌ QA账号配置错误：{error_message}")
         return None
 
     # Base URL for the QA Auth Endpoint
