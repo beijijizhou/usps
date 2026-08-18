@@ -3,6 +3,7 @@ import time
 from SDS.headers import get_qa_headers
 
 LABEL_SCAN_URL = "https://pod-api.sdspod.com/pod/qc/factoryOrder/fast"
+QC_ORDER_INFO_URL = "https://pod-api.sdspod.com/pod/qc/factoryOrder"
 SUCCESS_CODES = {0, 200, "0", "200", "SUCCESS", "success", True}
 
 
@@ -57,7 +58,42 @@ def parse_label_scan_response(order_no, response):
     return result
 
 
-def scanID(order_no, headers=None):
+def get_qc_order_info(order_no, headers=None):
+    timestamp_ms = int(time.time() * 1000)
+    request_headers = headers or get_headers()
+    response = requests.get(
+        QC_ORDER_INFO_URL,
+        params={"no": order_no, "t": timestamp_ms},
+        headers=request_headers,
+        timeout=10,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def needs_batch_qc(order_no, headers=None):
+    try:
+        order_info = get_qc_order_info(order_no, headers=headers)
+    except Exception as e:
+        return False, f"质检前详情查询失败，使用普通质检：{e}"
+
+    factory_orders = order_info.get("factoryOrderList") or []
+    if len(factory_orders) > 1:
+        return True, f"同销售订单包含 {len(factory_orders)} 个生产单"
+
+    for factory_order in factory_orders:
+        quantity = factory_order.get("currentQcQty") or factory_order.get("qty") or 0
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            quantity = 0
+        if quantity > 1:
+            return True, f"单项多件，待质检数量 {quantity}"
+
+    return False, "单件普通质检"
+
+
+def scanID(order_no, headers=None, batch=False):
     """
     Calls the SDS QC fast-scan API to create/scan the shipping label.
     """
@@ -66,6 +102,8 @@ def scanID(order_no, headers=None):
         "no": order_no,
         "t": timestamp_ms
     }
+    if batch:
+        params["batch"] = 1
     request_headers = headers or get_headers()
 
     if not request_headers.get("access-token"):
@@ -79,7 +117,8 @@ def scanID(order_no, headers=None):
         }
 
     try:
-        print(f"\nScanning Order: {order_no}...")
+        scan_mode = "Batch QC" if batch else "QC"
+        print(f"\n{scan_mode} Order: {order_no}...")
         response = requests.get(LABEL_SCAN_URL, params=params, headers=request_headers, timeout=10)
         result = parse_label_scan_response(order_no, response)
         print(f"QC Scan Result: {result}")

@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import time
 from datetime import date
-from concurrent.futures import ThreadPoolExecutor
-from SDS.QA_scan import get_headers as get_qa_scan_headers, scanID
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from SDS.QA_scan import get_headers as get_qa_scan_headers, get_qc_order_info, scanID
 from SDS.factoryFetch import factory_fetch_records
 from SDS.platform_selector import render_platform_dropdown
-from SDS.pre_scan import DEFAULT_MAX_WORKERS, run_parallel_scan_generator
+from SDS.pre_scan import DEFAULT_MAX_WORKERS, process_single_order
 from SDS.producedTrackingFetch import fetch_produced_tracking_since
 from SDS.scan_workflow import build_scan_log_row
 from SDS.unproducedFetch import fetch_old_unfinished_orders_with_tracking, fetch_unproduced_orders_with_tracking
@@ -18,14 +18,17 @@ DISPLAY_COLUMN_LABELS = {
     "Order ID": "订单号",
     "Tracking Number": "物流单号",
     "Merchant Order No": "销售订单号",
+    "Same Order Count": "同单件数",
+    "Item Quantity": "单项数量",
     "Carrier": "渠道",
     "Factory Status": "工厂状态",
     "Begin Time": "开始时间",
     "Finished Time": "完成时间",
     "Ship Time": "发货时间",
     "Status": "状态",
-    "Label Scan": "出面单",
-    "Label Scan Detail": "出面单接口详情",
+    "Label Scan": "质检",
+    "Label Scan Detail": "质检接口详情",
+    "Label Scan Raw": "质检接口原始返回",
     "Label PDF": "面单PDF",
     "Scan Status": "扫描状态",
     "Result": "结果",
@@ -83,7 +86,7 @@ def render_tracking_fetch_progress(selected_platform, fetch_func, success_title,
 
 
 # --- API Logic ---
-def handle_batch_scan(order_ids, max_workers=DEFAULT_MAX_WORKERS):
+def handle_batch_scan(order_ids, max_workers=DEFAULT_MAX_WORKERS, display_rows=None):
     """
     UI: Manages the progress bar and processes data.
     Takes a local list of order_ids passed directly from the UI trigger.
@@ -98,46 +101,202 @@ def handle_batch_scan(order_ids, max_workers=DEFAULT_MAX_WORKERS):
         st.warning("没有可处理的订单号。")
         return
 
-    # 1. Setup UI Elements
     progress_bar = st.progress(0)
     status_text = st.empty()
     scan_log = []
     total = len(clean_order_ids)
     start_time = time.time()
     qa_headers = get_qa_scan_headers()
-    label_scan_workers = min(max_workers, len(clean_order_ids))
-    label_scan_executor = ThreadPoolExecutor(max_workers=label_scan_workers)
-    label_scan_futures = {
-        order_id: label_scan_executor.submit(scanID, order_id, qa_headers)
-        for order_id in clean_order_ids
-    }
+    order_groups = build_order_scan_groups(clean_order_ids, display_rows=display_rows)
+    completed = 0
+    group_worker_count = min(max_workers, len(order_groups)) if order_groups else 1
 
-    # 2. Run Generator and Update UI
-    for i, res in enumerate(run_parallel_scan_generator(clean_order_ids, max_workers=max_workers)):
-        order_id = str(res.get("Order ID", "")).strip()
-        label_future = label_scan_futures.get(order_id)
-        label_scan_result = label_future.result() if label_future else None
-        scan_log.append(build_scan_log_row(
-            res, label_scan_result=label_scan_result))
+    with ThreadPoolExecutor(max_workers=group_worker_count) as executor:
+        futures = {
+            executor.submit(scan_order_group, group_order_ids, qa_headers): group_key
+            for group_key, group_order_ids in order_groups
+        }
+        for future in as_completed(futures):
+            group_rows = future.result()
+            scan_log.extend(group_rows)
+            completed += len(group_rows)
+            remaining = total - completed
+            progress_bar.progress(completed / total if total else 0)
+            status_text.text(
+                f"已质检/查询 {completed}/{total} | 剩余 {remaining} | 当前组：{futures[future]}"
+            )
 
-        # Update progress
-        queried = i + 1
-        remaining = total - queried
-        percent_complete = queried / total
-        progress_bar.progress(percent_complete)
-        status_text.text(
-            f"已查询 {queried}/{total} | 剩余 {remaining} | 当前订单：{res.get('Order ID')}"
-        )
-
-    label_scan_executor.shutdown(wait=True)
-
-    # 3. Finalize
     duration = time.time() - start_time
     scan_results_df = pd.DataFrame(scan_log)
     st.session_state.scan_results_summary = scan_results_df
-    status_text.success(f"批量出面单完成！共 {total} 个订单，用时 {duration:.2f} 秒")
+    status_text.success(f"批量质检并查询面单完成！共 {total} 个订单，用时 {duration:.2f} 秒")
 
     st.rerun()
+
+
+def build_order_scan_groups(order_ids, display_rows=None):
+    display_rows = display_rows if display_rows is not None else st.session_state.get("fetched_orders_display", [])
+    merchant_by_order_id = {
+        str(row.get("Order ID", "")).strip(): str(row.get("Merchant Order No", "")).strip()
+        for row in display_rows
+        if str(row.get("Order ID", "")).strip()
+    }
+
+    grouped = {}
+    ungrouped_order_ids = []
+    for order_id in order_ids:
+        group_key = merchant_by_order_id.get(order_id)
+        if group_key:
+            grouped.setdefault(group_key, []).append(order_id)
+        else:
+            ungrouped_order_ids.append(order_id)
+
+    groups = list(grouped.items())
+    groups.extend(group_consecutive_order_ids(ungrouped_order_ids))
+    return groups
+
+
+def group_consecutive_order_ids(order_ids):
+    sorted_ids = sort_order_ids_for_qc(order_ids)
+    groups = []
+    current_group = []
+    previous_number = None
+
+    for order_id in sorted_ids:
+        current_number = parse_order_number(order_id)
+        if (
+            current_group
+            and previous_number is not None
+            and current_number is not None
+            and current_number == previous_number + 1
+        ):
+            current_group.append(order_id)
+        else:
+            if current_group:
+                groups.append(make_consecutive_group(current_group))
+            current_group = [order_id]
+        previous_number = current_number
+
+    if current_group:
+        groups.append(make_consecutive_group(current_group))
+    return groups
+
+
+def make_consecutive_group(order_ids):
+    if len(order_ids) == 1:
+        return order_ids[0], order_ids
+    return f"连续生产单 {order_ids[0]} - {order_ids[-1]}", order_ids
+
+
+def parse_order_number(order_id):
+    value = str(order_id).strip()
+    return int(value) if value.isdigit() else None
+
+
+def scan_order_group(order_ids, qa_headers):
+    rows = []
+    sorted_order_ids = sort_order_ids_for_qc(order_ids)
+    order_info = None
+    batch_reason = ""
+
+    if len(sorted_order_ids) == 1:
+        lookup_order_id = sorted_order_ids[0]
+        order_info = fetch_qc_order_info_safely(lookup_order_id, qa_headers)
+        factory_order_ids = get_factory_order_ids(order_info)
+        if factory_order_ids:
+            sorted_order_ids = sort_order_ids_for_qc(factory_order_ids)
+
+    qc_results = {}
+
+    if len(sorted_order_ids) > 1:
+        batch_qc_result = scanID(sorted_order_ids[0], qa_headers, batch=True)
+        for order_id in sorted_order_ids:
+            qc_results[order_id] = build_group_qc_result(order_id, batch_qc_result, sorted_order_ids)
+    else:
+        order_id = sorted_order_ids[0]
+        if order_info is None:
+            order_info = fetch_qc_order_info_safely(order_id, qa_headers)
+        use_batch_qc, batch_reason = order_info_needs_batch_qc(order_info)
+        qc_result = scanID(order_id, qa_headers, batch=use_batch_qc)
+        if use_batch_qc and qc_result.get("ok"):
+            qc_result["message"] = f"{batch_reason}，批量质检完成"
+        elif batch_reason and not qc_result.get("message"):
+            qc_result["message"] = batch_reason
+        qc_results[order_id] = qc_result
+
+    for order_id in sorted_order_ids:
+        scan_result = wait_for_tracking_after_group_qc(order_id, qa_headers)
+        rows.append(build_scan_log_row(scan_result, label_scan_result=qc_results.get(order_id)))
+    return rows
+
+
+def fetch_qc_order_info_safely(order_id, qa_headers):
+    try:
+        return get_qc_order_info(order_id, headers=qa_headers)
+    except Exception:
+        return None
+
+
+def get_factory_order_ids(order_info):
+    if not order_info:
+        return []
+    return [
+        str(factory_order.get("factoryOrderNo", "")).strip()
+        for factory_order in order_info.get("factoryOrderList", [])
+        if str(factory_order.get("factoryOrderNo", "")).strip()
+    ]
+
+
+def order_info_needs_batch_qc(order_info):
+    if not order_info:
+        return False, "质检前详情查询失败，使用普通质检"
+
+    factory_orders = order_info.get("factoryOrderList") or []
+    if len(factory_orders) > 1:
+        return True, f"同销售订单包含 {len(factory_orders)} 个生产单"
+
+    for factory_order in factory_orders:
+        quantity = factory_order.get("currentQcQty") or factory_order.get("qty") or 0
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            quantity = 0
+        if quantity > 1:
+            return True, f"单项多件，待质检数量 {quantity}"
+
+    return False, "单件普通质检"
+
+
+def build_group_qc_result(order_id, batch_qc_result, group_order_ids):
+    result = dict(batch_qc_result or {})
+    result["order_no"] = order_id
+    if result.get("ok"):
+        result["message"] = f"同销售订单批量质检完成，共 {len(group_order_ids)} 个生产单"
+    return result
+
+
+def sort_order_ids_for_qc(order_ids):
+    def sort_key(order_id):
+        value = str(order_id)
+        digits = "".join(char for char in value if char.isdigit())
+        return (digits.zfill(32), value)
+
+    return sorted(order_ids, key=sort_key)
+
+
+def wait_for_tracking_after_group_qc(order_id, qa_headers, attempts=4, delay_seconds=1.5):
+    result = None
+    for attempt in range(attempts):
+        result = process_single_order(order_id, qa_headers)
+        if result.get("status") == "success" and result.get("tracking"):
+            return result
+        if attempt < attempts - 1:
+            time.sleep(delay_seconds)
+    return result or {
+        "Order ID": order_id,
+        "status": "error",
+        "msg": "质检后仍未查到物流单号",
+    }
 
 # --- Streamlit UI ---
 
@@ -158,12 +317,12 @@ def render_SDS_widgets():
     )
 
     old_days_before = st.number_input(
-        "历史订单查询天数",
-        min_value=2,
+        "今天以前生产中订单查询天数",
+        min_value=1,
         max_value=30,
         value=7,
         step=1,
-        help="用于查询昨天之前、仍处于生产中的未完成订单。"
+        help="查询从 N 天前 00:00:00 到昨天 23:59:59，仍处于生产中的订单。"
     )
 
     history_col1, history_col2 = st.columns(2)
@@ -192,7 +351,7 @@ def render_SDS_widgets():
             )
 
     with col2:
-        if st.button("🗓️ 获取昨天之前生产中订单", use_container_width=True):
+        if st.button("🗓️ 获取今天以前生产中订单", use_container_width=True):
             render_tracking_fetch_progress(
                 selected_platform=selected_platform,
                 fetch_func=lambda max_workers, on_progress: fetch_old_unfinished_orders_with_tracking(
@@ -200,8 +359,8 @@ def render_SDS_widgets():
                     max_workers=max_workers,
                     on_progress=on_progress
                 ),
-                success_title="昨天之前生产中未完成订单",
-                empty_title="昨天之前生产中未完成订单",
+                success_title="今天以前生产中订单",
+                empty_title="今天以前生产中订单",
                 can_scan=True,
                 max_workers=max_workers
             )
@@ -243,10 +402,11 @@ def render_SDS_widgets():
     scan_col, _ = st.columns([1, 3])
     with scan_col:
 
-        if st.button("🚀 执行批量 出面单", type="primary", use_container_width=True, disabled=button_disabled):
+        if st.button("🚀 执行批量质检并查询面单", type="primary", use_container_width=True, disabled=button_disabled):
             local_scan_list = list(current_orders)
+            local_display_rows = list(st.session_state.get("fetched_orders_display", []))
             clear_order_queue()
-            handle_batch_scan(local_scan_list, max_workers=max_workers)
+            handle_batch_scan(local_scan_list, max_workers=max_workers, display_rows=local_display_rows)
 
     # --- Display Fetched Orders First ---
     # If there are fetched IDs in our temporary holding list, show them cleanly here
