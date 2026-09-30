@@ -74,9 +74,9 @@ def list_batches(token, limit=50):
             "批次号": batch_number,
             "名称": str(row.get("name") or "").strip(),
             "件数": _number(row.get("piece_count"), progress.get("total_num"), row.get("total_num"), row.get("num")),
-            "负责人": str(row.get("personnel_label") or "").strip(),
             "创建时间": str(row.get("created_at") or row.get("created_date") or ""),
         })
+    batches.sort(key=lambda batch: batch["创建时间"], reverse=True)
     return batches
 
 
